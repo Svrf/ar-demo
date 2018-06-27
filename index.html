@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+        <meta http-equiv="content-language" content="en-EN" />
+        
+        <title>JEELIZ FACE FILTER : TIGER DEMO</title>
+        
+        <!-- INCLUDE JEELIZ FACEFILTER SCRIPT -->
+        <script type="text/javascript" src="player.js"></script>
+        <script type="text/javascript" src="svrf-client.js"></script>
+        <script type="text/javascript" src="jeelizFaceFilter.js"></script>
+
+        <!-- INCLUDE THREE.JS -->
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/90/three.min.js"></script>
+
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/tween.js/16.3.5/Tween.min.js"></script>
+
+        <!-- INCLUDE DEMO SCRIPT -->
+    </head>
+    
+    <body onload="main()" style='color: white'>
+        <div style="height: 512px">
+          <canvas width="1024" height="512" id="player" style="opacity: 0; position: absolute; z-index: 2;"></canvas>
+          <canvas width="1024" height="512" id="jeeFaceFilterCanvas" style="position: absolute; left: 0;"></canvas>
+        </div>
+
+        <input type="text" id="input">
+        <button id="go">Go</button>
+
+        <script type="text/javascript" src="demo_tiger.js"></script>
+    </body>
+</html>
+ 
+ 
