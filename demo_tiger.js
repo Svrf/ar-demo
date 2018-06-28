@@ -14,7 +14,6 @@ var SETTINGS={
 var THREEVIDEOTEXTURE, THREERENDERER, THREEFACEOBJ3D, THREEFACEOBJ3DPIVOTED, THREESCENE, THREECAMERA, MOUTHOPENINGMATERIALS=[], TIGERMOUTHHIDEMESH=false;
 var PARTICLESOBJ3D, PARTICLES=[], PARTICLESHOTINDEX=0, PARTICLEDIR;
 var ISDETECTED=false;
-var PLAYER;
 
 //callback : launched if a face is detected or lost. TODO : add a cool particle effect WoW !
 function detect_callback(isDetected){
@@ -188,12 +187,8 @@ function init_threeScene(spec){
 
     THREESCENE.add(ambientLight, dirLight);
 
-    var playerCanvas = document.getElementById('player');
-    PLAYER = new Player(playerCanvas);
-    PLAYER.src = 'https://www.svrf.com/storage/svrf-previews/194118/images/1080.jpg';
-
     //init video texture with red
-    THREEVIDEOTEXTURE = new THREE.Texture(playerCanvas);
+    THREEVIDEOTEXTURE=new THREE.DataTexture( new Uint8Array([255,0,0]), 1, 1, THREE.RGBFormat);
     THREEVIDEOTEXTURE.needsUpdate=true;
 
     //CREATE THE VIDEO BACKGROUND
@@ -217,22 +212,19 @@ function init_threeScene(spec){
          }
     });
     var videoGeometry=new THREE.BufferGeometry()
-    var videoScreenCorners=new Float32Array([-1,  -1,   1,-1,   1,1,   -1,1]);
+    var videoScreenCorners=new Float32Array([-1,-1,   1,-1,   1,1,   -1,1]);
     videoGeometry.addAttribute( 'position', new THREE.BufferAttribute( videoScreenCorners, 2 ) );
     videoGeometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
-
-    var geometry = new THREE.BoxGeometry( 200, 200, 200 );
-
-    var videoMesh=new THREE.Mesh(geometry, videoMaterial);
-    // videoMesh.onAfterRender=function(){
-    //     //replace THREEVIDEOTEXTURE.__webglTexture by the real video texture
-    //     THREERENDERER.properties.update(THREEVIDEOTEXTURE, '__webglTexture', spec.videoTexture);
-    //     THREEVIDEOTEXTURE.magFilter=THREE.LinearFilter;
-    //     THREEVIDEOTEXTURE.minFilter=THREE.LinearFilter;
-    //     delete(videoMesh.onAfterRender);
-    // };
-    //videoMesh.renderOrder=-1000; //render first
-    //videoMesh.frustumCulled=false;
+    var videoMesh=new THREE.Mesh(videoGeometry, videoMaterial);
+    videoMesh.onAfterRender=function(){
+        //replace THREEVIDEOTEXTURE.__webglTexture by the real video texture
+        THREERENDERER.properties.update(THREEVIDEOTEXTURE, '__webglTexture', spec.videoTexture);
+        THREEVIDEOTEXTURE.magFilter=THREE.LinearFilter;
+        THREEVIDEOTEXTURE.minFilter=THREE.LinearFilter;
+        delete(videoMesh.onAfterRender);
+    };
+    videoMesh.renderOrder=-1000; //render first
+    videoMesh.frustumCulled=false;
     THREESCENE.add(videoMesh);
 
     //CREATE THE CAMERA
@@ -244,7 +236,7 @@ function init_threeScene(spec){
 function main(){
     JEEFACEFILTERAPI.init({
         canvasId: 'jeeFaceFilterCanvas',
-        NNCpath: '', //root of NNC.json file
+        NNCpath: '../../../dist/', //root of NNC.json file
         callbackReady: function(errCode, spec){
             if (errCode){
                 console.log('AN ERROR HAPPENS. SORRY BRO :( . ERR =', errCode);
@@ -266,8 +258,6 @@ function main(){
                 detect_callback(true);
                 ISDETECTED=true;
             }
-
-            THREEVIDEOTEXTURE.needsUpdate = true;
 
             if (ISDETECTED){
                 //move the cube in order to fit the head
@@ -318,14 +308,4 @@ function main(){
     }); //end JEEFACEFILTERAPI.init call
 } //end main()
 
-var token;
-var authApi = new SVRF.AuthenticateApi();
-var mediaApi = new SVRF.MediaApi();
-authApi.authenticate(new SVRF.Body('key'))
-    .then((data) => SVRF.ApiClient.instance.authentications.XAppToken.apiKey = data.token);
-
-document.getElementById('go').addEventListener('click', () => {
-    var searchTerm = document.getElementById('input').value;
-    mediaApi.search(searchTerm)
-        .then((data) => PLAYER.src = data.media[0].files.images.max);
-});
+ 
