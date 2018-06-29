@@ -1,5 +1,6 @@
 (function () {
   const canvas = document.getElementById('jeeFaceFilterCanvas');
+  let mesh, animate;
 
   function removeBackground() {
     const background = THREESCENE.children.find(c => c.type === 'Mesh');
@@ -16,10 +17,11 @@
       const sphere = new THREE.SphereGeometry(10, 128, 128);
       const texture = new THREE.Texture(img);
       const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
-      const mesh = new THREE.Mesh(sphere, material);
+      mesh = new THREE.Mesh(sphere, material);
       texture.minFilter = THREE.LinearFilter;
       texture.needsUpdate = true;
       THREESCENE.add(mesh);
+      animate();
     };
   }
 
@@ -32,12 +34,23 @@
     let origin = null;
     let target = null;
     let phi = 0, theta = 0;
+    canvas.addEventListener('mouseup', () => {
+      //origin = target = null;
+    });
+    canvas.addEventListener('mouseout', () => {
+      //origin = target = null;
+    });
     canvas.addEventListener('mousemove', (e) => {
+      if (e.buttons !== 1) {
+        return;
+      }
+
       if (!origin) {
         origin = {x: e.clientX, y: e.clientY};
-      } else {
-        target = {x: e.clientX, y: e.clientY};
       }
+
+      target = {x: e.clientX, y: e.clientY};
+
 
       if (origin && target) {
         phi = (target.y - origin.y) / 128;
@@ -45,10 +58,9 @@
       }
     });
 
-    function animate() {
+    animate = () => {
       requestAnimationFrame( animate );
-      THREECAMERA.setRotationFromEuler(new THREE.Euler(phi - Math.PI / 2, theta, 0, 'YXZ'));
+      mesh.setRotationFromEuler(new THREE.Euler(phi, theta, 0));
     }
-    animate();
   });
 })();
