@@ -58,9 +58,24 @@
       }
     });
 
+    const obj = new THREE.Object3D();
+    const controls = new THREE.DeviceOrientationControls(obj);
+
+    let orientationOrigin;
     animate = () => {
-      requestAnimationFrame( animate );
+      requestAnimationFrame(animate);
       mesh.setRotationFromEuler(new THREE.Euler(phi, theta, 0));
+
+      controls.update();
+      const quaternion = obj.quaternion;
+      if (!orientationOrigin) {
+        quaternion.inverse();
+        orientationOrigin = quaternion.clone();
+        return;
+      }
+
+      const delta = orientationOrigin.clone().multiply(quaternion);
+      mesh.quaternion.multiply(delta);
     }
   });
 })();
