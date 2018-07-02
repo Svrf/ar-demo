@@ -176,8 +176,6 @@ function init_threeScene(spec){
     THREEFACEOBJ3DPIVOTED.add(PARTICLESOBJ3D);
     PARTICLEDIR=new THREE.Vector3();
 
-    //CREATE THE SCENE
-    THREESCENE=new THREE.Scene();
     THREESCENE.add(THREEFACEOBJ3D);
 
     //AND THERE WAS LIGHT
@@ -308,4 +306,10 @@ function main(){
     }); //end JEEFACEFILTERAPI.init call
 } //end main()
 
- 
+// Creating the scene immediately to export it.
+THREESCENE=new THREE.Scene();
+
+module.exports = {
+    scene: THREESCENE,
+    start: main,
+};
