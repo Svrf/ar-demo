@@ -14,7 +14,7 @@
     img.crossOrigin = 'anonymous';
     img.src = url;
     img.onload = () => {
-      const sphere = new THREE.SphereGeometry(10, 128, 128);
+      const sphere = new THREE.SphereBufferGeometry(100, 128, 128);
       const texture = new THREE.Texture(img);
       const material = new THREE.MeshBasicMaterial({ map: texture, side: THREE.BackSide });
       mesh = new THREE.Mesh(sphere, material);
@@ -28,17 +28,16 @@
   document.getElementById('go').addEventListener('click', function () {
     removeBackground();
     addPhotoBackground('https://www.svrf.com/storage/svrf-previews/76778/images/1080.jpg');
-    //window.controls = new THREE.TrackballControls(new THREE.Object3D(), canvas);
-    //window.controls.zoomSpeed = 100;
 
     let origin = null;
     let target = null;
     let phi = 0, theta = 0;
+
     canvas.addEventListener('mouseup', () => {
-      //origin = target = null;
+      target = origin = null;
     });
     canvas.addEventListener('mouseout', () => {
-      //origin = target = null;
+      target = origin = null;
     });
     canvas.addEventListener('mousemove', (e) => {
       if (e.buttons !== 1) {
@@ -51,10 +50,9 @@
 
       target = {x: e.clientX, y: e.clientY};
 
-
       if (origin && target) {
-        phi = (target.y - origin.y) / 128;
-        theta = (target.x - origin.x) / 128;
+        phi = (origin.y - target.y) / 128;
+        theta = (origin.x - target.x) / 128;
       }
     });
 
@@ -62,19 +60,41 @@
     const controls = new THREE.DeviceOrientationControls(obj);
 
     let orientationOrigin;
+    let previousOrientation;
+    let commonPhi = 0;
+    let commonTheta = 0;
     animate = () => {
+      window.mesh = mesh;
       requestAnimationFrame(animate);
-      mesh.setRotationFromEuler(new THREE.Euler(phi, theta, 0));
+      commonPhi += phi;
+      commonTheta += theta;
+      const pi2 = Math.PI / 2;
+      commonPhi = Math.max(-pi2, Math.min(commonPhi, pi2));
+      mesh.setRotationFromEuler(new THREE.Euler(commonPhi, commonTheta, 0));
+      // const mouseQuaternion = new THREE.Quaternion();
+      // mesh.rotateX(phi);
+      // mesh.rotateY(theta);
+      // mouseQuaternion.setFromEuler(new THREE.Euler(phi, theta, 0));
+      //mouseQuaternion.inverse();
+      phi = theta = 0;
+      origin && (origin.x = target.x);
+      origin && (origin.y = target.y);
+      //mesh.quaternion.multiply(mouseQuaternion);
 
       controls.update();
-      const quaternion = obj.quaternion;
       if (!orientationOrigin) {
-        quaternion.inverse();
-        orientationOrigin = quaternion.clone();
+        orientationOrigin = mesh.quaternion.clone();
+        previousOrientation = obj.quaternion.clone();
         return;
       }
 
-      const delta = orientationOrigin.clone().multiply(quaternion);
+      if (obj.quaternion.equals(previousOrientation)) {
+        return;
+      }
+      previousOrientation = obj.quaternion.clone();
+
+      const delta = orientationOrigin.clone().multiply(obj.quaternion);
+      delta.inverse();
       mesh.quaternion.multiply(delta);
     }
   });
