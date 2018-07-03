@@ -104,8 +104,6 @@ document.getElementById('go').addEventListener('click', function () {
       return;
     }
 
-    const delta = orientationOrigin.clone().multiply(obj.quaternion);
-    ;
     mesh.quaternion.copy(obj.quaternion.clone().inverse());
     previousOrientation = obj.quaternion.clone();
   }
