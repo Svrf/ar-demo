@@ -6,6 +6,7 @@ const {
   SphereBufferGeometry,
   Texture,
 } = require('three');
+const SVRF = require('svrf-client');
 
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
@@ -52,7 +53,24 @@ function addPhotoBackground(url) {
   };
 }
 
+const authApi = new SVRF.AuthenticateApi();
+const mediaApi = new SVRF.MediaApi();
+authApi.authenticate(new SVRF.Body('api key'))
+  .then(({token}) => mediaApi.apiClient.authentications.XAppToken.apiKey = token);
+
 document.getElementById('explore').addEventListener('click', function () {
-  removeBackground();
-  addPhotoBackground('https://www.svrf.com/storage/svrf-previews/76778/images/1080.jpg');
+  //removeBackground();
+  //addPhotoBackground('https://www.svrf.com/storage/svrf-previews/76778/images/1080.jpg');
+
+  const searchContainer = document.getElementById('searchContainer');
+  const input = document.getElementById('searchBox');
+  searchContainer.style.display = 'block';
+  input.addEventListener('keyup', () => {
+    if (input.value.length < 3) {
+      return;
+    }
+
+    mediaApi.search(input.value, 'photo')
+      .then(({media}) => console.log(media));
+  });
 });
