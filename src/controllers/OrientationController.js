@@ -27,9 +27,7 @@ module.exports = class OrientationController extends BaseController {
       return;
     }
 
-    const orientation = this.getOrientation().inverse();
-    this.mesh.quaternion.copy(orientation);
-
+    this.mesh.quaternion.copy(this.getOrientation());
     this.previousOrientation = this.getOrientation();
   }
 

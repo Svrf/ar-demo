@@ -11,11 +11,12 @@ const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
 const {scene, start} = require('../dist/demo_tiger');
 
-start();
-
 const canvas = document.getElementById('jeeFaceFilterCanvas');
-let mesh, animate;
-let controllers = [];
+// Need to set it with attributes; otherwise jeelizFaceFilter wouldn't work properly
+canvas.height = document.documentElement.clientHeight;
+canvas.width = document.documentElement.clientWidth;
+
+start();
 
 function removeBackground() {
   const background = scene.children.find(c => c.type === 'Mesh');
@@ -32,24 +33,26 @@ function addPhotoBackground(url) {
     const sphere = new SphereBufferGeometry(100, 128, 128);
     const texture = new Texture(img);
     const material = new MeshBasicMaterial({ map: texture, side: BackSide });
-    mesh = new Mesh(sphere, material);
+    const mesh = new Mesh(sphere, material);
     texture.minFilter = LinearFilter;
     texture.needsUpdate = true;
     scene.add(mesh);
-    controllers = [
+
+    const controllers = [
       new MouseController(mesh, canvas),
       new OrientationController(mesh),
     ];
+
+    function animate () {
+      requestAnimationFrame(animate);
+      controllers.forEach((c) => c.tick());
+    };
+
     animate();
   };
 }
 
-document.getElementById('go').addEventListener('click', function () {
+document.getElementById('explore').addEventListener('click', function () {
   removeBackground();
   addPhotoBackground('https://www.svrf.com/storage/svrf-previews/76778/images/1080.jpg');
-
-  animate = () => {
-    requestAnimationFrame(animate);
-    controllers.forEach((c) => c.tick());
-  }
 });
