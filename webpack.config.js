@@ -9,17 +9,20 @@ module.exports = {
     filename: 'bundle.js'
   },
   module: {
-    rules: [{
-      test: /\.js$/,
-      exclude: /node_modules/,
-      use: {
-        loader: 'babel-loader',
-        options: {
-          presets: ['es2015'],
-          plugins: ['transform-class-properties'],
+    rules: [
+      {parser: {amd: false}},
+      {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['es2015'],
+            plugins: ['transform-class-properties'],
+          },
         },
-      },
-    }],
+      }
+    ],
   },
   plugins: [
     // For the demo_tiger.js script

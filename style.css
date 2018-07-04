@@ -25,3 +25,8 @@ body {
 #searchContainer #searchBox {
   font-size: 26px;
 }
+
+#searchResults img {
+  display: inline-block;
+  width: 200px;
+}
