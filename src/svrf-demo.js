@@ -63,16 +63,30 @@ const searchContainer = document.getElementById('searchContainer');
 const searchResults = document.getElementById('searchResults');
 const input = document.getElementById('searchBox');
 
+const resultsCache = {};
+
 function handleKeyUp() {
-  if (input.value.length < 3) {
+  const {value} = input;
+
+  if (resultsCache[value]) {
+    populateWithItems(resultsCache[value]);
     return;
   }
 
-  mediaApi.search(input.value, 'photo')
+  if (value.length === 0) {
+    populateWithTrending();
+    return;
+  }
+
+  if (value.length < 3) {
+    return;
+  }
+
+  mediaApi.search(value, 'photo')
     .then(({media}) => {
       console.log(media);
-      searchResults.innerHTML = '';
-      media.forEach((m) => appendResultItem(m));
+      resultsCache[value] = media;
+      populateWithItems(media);
     });
 }
 
@@ -93,10 +107,22 @@ function appendResultItem(media) {
   searchResults.appendChild(preview);
 }
 
-document.getElementById('explore').addEventListener('click', function () {
-  //removeBackground();
-  //addPhotoBackground('https://www.svrf.com/storage/svrf-previews/76778/images/1080.jpg');
-  searchContainer.style.display = null;
+function populateWithItems(items) {
+  searchResults.innerHTML = '';
+  items.forEach((item) => appendResultItem(item));
+}
 
+function populateWithTrending() {
+  mediaApi.getTrending({size: 50})
+    .then(({media}) => {
+      const photos = media.filter((m) => m.type === 'photo');
+      populateWithItems(photos);
+      resultsCache[''] = photos;
+    });
+}
+
+document.getElementById('explore').addEventListener('click', function () {
+  searchContainer.style.display = null;
+  populateWithTrending();
   input.addEventListener('keyup', debounce(handleKeyUp, 500));
 });
