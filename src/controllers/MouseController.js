@@ -47,7 +47,7 @@ module.exports = class MouseController extends BaseController {
 
     if (this.originPosition && this.currentPosition) {
       this.deltaPhi = (this.originPosition.y - this.currentPosition.y) / this.mouseSensitivity;
-      this.deltaTheta = (this.originPosition.x - this.currentPosition.x) / this.mouseSensitivity;
+      this.deltaTheta = (this.currentPosition.x - this.originPosition.x) / this.mouseSensitivity;
     }
   }
 

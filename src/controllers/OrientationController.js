@@ -1,5 +1,5 @@
 require('three/examples/js/controls/DeviceOrientationControls');
-const {DeviceOrientationControls, Object3D} = require('three');
+const {DeviceOrientationControls, Object3D, Quaternion} = require('three');
 
 const BaseController = require('./BaseController');
 
@@ -27,7 +27,10 @@ module.exports = class OrientationController extends BaseController {
       return;
     }
 
-    this.mesh.quaternion.copy(this.getOrientation());
+    const newOrientation = this.getOrientation();
+    const mirrored = new Quaternion(newOrientation.x, -newOrientation.y, newOrientation.z, newOrientation.w)
+    newOrientation.copy(mirrored);
+    this.mesh.quaternion.copy(newOrientation);
     this.previousOrientation = this.getOrientation();
   }
 
