@@ -12,10 +12,18 @@ body {
   font-size: 26px;
 }
 
-#searchContainer {
+#searchResults {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+
+  overflow-y: scroll;
+
   position: fixed;
   top: 0;
   left: 0;
+
+  padding-top: 100px;
 
   width: 100vw;
   height: 100vh;
@@ -24,9 +32,14 @@ body {
 
 #searchContainer #searchBox {
   font-size: 26px;
+  position: fixed;
+  top: 0;
+  left: 0;
 }
 
-#searchResults img {
+#searchContainer img {
   display: inline-block;
-  width: 200px;
+  width: 40%;
+
+  margin: 20px 0;
 }
