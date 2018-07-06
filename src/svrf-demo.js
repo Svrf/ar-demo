@@ -56,29 +56,52 @@ function addPhotoBackground(url) {
 
 const authApi = new SVRF.AuthenticateApi();
 const mediaApi = new SVRF.MediaApi();
-authApi.authenticate(new SVRF.Body('key'))
-  .then(({token}) => mediaApi.apiClient.authentications.XAppToken.apiKey = token);
+authApi.authenticate(new SVRF.Body('a key'))
+  .then(({token}) => mediaApi.apiClient.authentications.XAppToken.apiKey = token)
+  .then(() => mediaApi.getTrending({size: 50}))
+  .then(({media}) => {
+    const photos = media.filter((m) => m.type === 'photo');
+    resultsCache[''] = photos;
+
+    const explorePreviews = document.getElementById('explorePreview');
+    photos
+      .filter((p) => p.files.images['136'])
+      .slice(0, 3)
+      .forEach((p) => {
+        const preview = document.createElement('img');
+        preview.src = p.files.images['136'];
+        explorePreviews.appendChild(preview);
+        preview.addEventListener('click', () => {
+          removeBackground();
+          addPhotoBackground(p.files.images.max);
+        });
+      });
+  });
 
 const searchContainer = document.getElementById('searchContainer');
 const searchResults = document.getElementById('searchResults');
 const input = document.getElementById('searchBox');
+const trending = document.getElementById('trending');
+const exploreButton = document.getElementById('exploreButton');
 
 const resultsCache = {};
 
-function handleKeyUp() {
+let handleKeyUp = () => {
   const {value} = input;
 
-  if (resultsCache[value]) {
+  trending.style.visibility = value.length ? 'hidden' : null;
+
+  if(resultsCache[value]) {
     populateWithItems(resultsCache[value]);
     return;
   }
 
-  if (value.length === 0) {
+  if(value.length === 0) {
     populateWithTrending();
     return;
   }
 
-  if (value.length < 3) {
+  if(value.length < 3) {
     return;
   }
 
@@ -89,6 +112,8 @@ function handleKeyUp() {
       populateWithItems(media);
     });
 }
+
+handleKeyUp = debounce(handleKeyUp, 500);
 
 function appendResultItem(media) {
   const preview = document.createElement('img');
@@ -101,7 +126,7 @@ function appendResultItem(media) {
   preview.addEventListener('click', () => {
     removeBackground();
     addPhotoBackground(media.files.images.max);
-    searchContainer.style.display = 'none';
+    closeSearch();
   });
 
   searchResults.appendChild(preview);
@@ -112,17 +137,15 @@ function populateWithItems(items) {
   items.forEach((item) => appendResultItem(item));
 }
 
-function populateWithTrending() {
-  mediaApi.getTrending({size: 50})
-    .then(({media}) => {
-      const photos = media.filter((m) => m.type === 'photo');
-      populateWithItems(photos);
-      resultsCache[''] = photos;
-    });
+function closeSearch() {
+  searchContainer.style.display = 'none';
+  input.removeEventListener('keyup', handleKeyUp);
 }
 
-document.getElementById('explore').addEventListener('click', function () {
+exploreButton.addEventListener('click', function () {
   searchContainer.style.display = null;
-  populateWithTrending();
-  input.addEventListener('keyup', debounce(handleKeyUp, 500));
+  populateWithItems(resultsCache['']);
+  input.addEventListener('keyup', handleKeyUp);
 });
+
+document.getElementById('backButton').addEventListener('click', closeSearch);
