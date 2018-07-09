@@ -20,11 +20,11 @@ authApi.authenticate(new SVRF.Body('a key'))
     trendingResults = photos;
 
     photos
-      .filter((p) => p.files.images['136'])
+      .filter((p) => p.files.images['540'])
       .slice(0, 3)
       .forEach((p) => {
         const preview = document.createElement('img');
-        preview.src = p.files.images['136'];
+        preview.src = p.files.images['540'];
         explorePreviews.appendChild(preview);
         preview.addEventListener('click', () => {
           removeBackground();
