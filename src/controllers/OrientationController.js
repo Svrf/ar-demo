@@ -23,11 +23,14 @@ module.exports = class OrientationController extends BaseController {
       return;
     }
 
+    // Don't reset it every tick if the device wasn't moved.
     if (this.orientationObject.quaternion.equals(this.previousOrientation)) {
       return;
     }
 
     const newOrientation = this.getOrientation();
+    // Background is mirrored in Y axis because we're inside the sphere, so we need to mirror
+    // quaternion in this way as well..
     const mirrored = new Quaternion(newOrientation.x, -newOrientation.y, newOrientation.z, newOrientation.w)
     newOrientation.copy(mirrored);
     this.mesh.quaternion.copy(newOrientation);
