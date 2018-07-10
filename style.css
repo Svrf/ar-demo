@@ -44,7 +44,7 @@ h1 {
 #explore .image {
   cursor: pointer;
   display: inline-block;
-  height: 100px;
+  height: 120px;
   width: 30%;
   background-size: contain;
 }
@@ -128,7 +128,7 @@ h1 {
 #searchResults .image {
   display: inline-block;
   width: 40%;
-  padding-top: 24%;
+  height: 270px;
 
   margin: 20px 5%;
   cursor: pointer;
