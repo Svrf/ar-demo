@@ -41,11 +41,12 @@ h1 {
   justify-content: space-between;
 }
 
-#explore img {
+#explore .image {
   cursor: pointer;
   display: inline-block;
-  height: 100%;
+  height: 100px;
   width: 30%;
+  background-size: contain;
 }
 
 #searchContainer {
@@ -124,9 +125,10 @@ h1 {
   height: 75%;
 }
 
-#searchResults img {
+#searchResults .image {
   display: inline-block;
   width: 40%;
+  padding-top: 24%;
 
   margin: 20px 5%;
   cursor: pointer;

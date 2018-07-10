@@ -17,6 +17,25 @@ function handleExploreClick() {
   input.addEventListener('keyup', handleKeyUp);
 }
 
+function createImage(media) {
+  const src = media.files.images['540'];
+  if (!src) {
+    return null;
+  }
+
+  const image = document.createElement('div');
+  image.style.backgroundImage = `url('${src}')`;
+  image.classList.add('image');
+
+  image.addEventListener('click', () => {
+    removeBackground();
+    addPhotoBackground(media);
+    closeSearch();
+  });
+
+  return image;
+}
+
 api.authenticate()
   .then(() => {
     document.getElementById('exploreButton').addEventListener('click', handleExploreClick);
@@ -26,13 +45,8 @@ api.authenticate()
     trending
       .slice(0, 3)
       .forEach((media) => {
-        const preview = document.createElement('img');
-        preview.src = media.files.images['540'];
-        explorePreviews.appendChild(preview);
-        preview.addEventListener('click', () => {
-          removeBackground();
-          addPhotoBackground(media);
-        });
+        const preview = createImage(media);
+        preview && explorePreviews.appendChild(preview);
       });
   });
 
@@ -73,20 +87,8 @@ const handleKeyUp = debounce(() => {
 }, 1000);
 
 function appendResultItem(media) {
-  const preview = document.createElement('img');
-  const src = media.files.images['540'];
-  if (!src) {
-    return;
-  }
-
-  preview.src = src;
-  preview.addEventListener('click', () => {
-    removeBackground();
-    addPhotoBackground(media);
-    closeSearch();
-  });
-
-  searchResults.appendChild(preview);
+  const preview = createImage(media);
+  preview && searchResults.appendChild(preview);
 }
 
 function closeSearch() {
