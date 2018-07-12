@@ -13,6 +13,16 @@ h1 {
   font-weight: lighter;
 }
 
+#webcam {
+  display: none;
+}
+
+#imageData {
+  position: fixed;
+  top: 0;
+  left: 0;
+}
+
 #explore {
   position: absolute;
   right: 10%;

@@ -30,5 +30,6 @@ module.exports = {
       THREE: 'three',
       TWEEN: 'tween.js',
     }),
+    //new webpack.IgnorePlugin(/fs/),
   ],
 };

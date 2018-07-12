@@ -9,7 +9,6 @@ const {
 
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
-const {scene} = require('../dist/demo_tiger');
 
 const canvas = document.getElementById('jeeFaceFilterCanvas');
 // Need to set it with attributes; otherwise jeelizFaceFilter wouldn't work properly
@@ -44,8 +43,8 @@ exports.addPhotoBackground = (media) => {
     ];
 
     function animate () {
-      requestAnimationFrame(animate);
       controllers.forEach((c) => c.tick());
+      requestAnimationFrame(animate);
     };
 
     animate();

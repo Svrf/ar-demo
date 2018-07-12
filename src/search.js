@@ -1,10 +1,7 @@
 const debounce = require('debounce');
 
-const {start} = require('../dist/demo_tiger');
 const {removeBackground, addPhotoBackground} = require('./viewer');
 const api = require('./api');
-
-start();
 
 const searchContainer = document.getElementById('searchContainer');
 const searchResults = document.getElementById('searchResults');
