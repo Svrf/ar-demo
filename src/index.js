@@ -1,5 +1,6 @@
 //require('./search');
 const three = require('three');
+window.THREE = three;
 
 const brf = {locateFile: (filename) => `dist/${filename}`};
 initializeBRF(brf);
@@ -9,6 +10,7 @@ setTimeout(() => manager.init(new brf.Rectangle(0, 0, 640, 480), new brf.Rectang
 
 function initTiger(video, context) {
   const scene = new three.Scene();
+  window.scene = scene;
   const renderer = new three.WebGLRenderer({
     canvas: document.getElementById('mainCanvas'),
     context,
@@ -172,36 +174,38 @@ navigator.mediaDevices.getUserMedia({video: {facingMode: 'user', width: 512, hei
     const video = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, video);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR)
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
 
     const {camera, renderer, scene, faceObject} = initTiger(video, gl);
 
     function animate() {
-      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGBA, gl.UNSIGNED_BYTE, document.getElementById('webcam'));
+      gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, document.getElementById('webcam'));
       const context = brfCanvas.getContext('2d');
       context.drawImage(document.getElementById('webcam'), 0, 0, 640, 480);
       manager.update(context.getImageData(0, 0, 640, 480).data);
 
       const face = manager.getFaces()[0];
-      if (face) {
-        const {bounds} = face;
-        var tanFOV=Math.tan(camera.aspect*camera.fov*Math.PI/360); //tan(FOV/2), in radians
-        var W=bounds.width / 640;  //relative width of the detection window (1-> whole width of the detection window)
-        var D=1/(2*W*tanFOV); //distance between the front face of the cube and the camera
+      // if (face) {
+      //   const {bounds} = face;
+      //   var tanFOV=Math.tan(camera.aspect*camera.fov*Math.PI/360); //tan(FOV/2), in radians
+      //   var W=bounds.width / 640;  //relative width of the detection window (1-> whole width of the detection window)
+      //   var D=1/(2*W*tanFOV); //distance between the front face of the cube and the camera
 
-        //coords in 2D of the center of the detection window in the viewport :
-        var xv=bounds.x;
-        var yv=bounds.y;
+      //   //coords in 2D of the center of the detection window in the viewport :
+      //   var xv=bounds.x;
+      //   var yv=bounds.y;
 
-        //coords in 3D of the center of the cube (in the view coordinates system)
-        var z=-D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
-        var x=xv*D*tanFOV;
-        var y=yv*D*tanFOV/camera.aspect;
+      //   //coords in 3D of the center of the cube (in the view coordinates system)
+      //   var z=-D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
+      //   var x=xv*D*tanFOV;
+      //   var y=yv*D*tanFOV/camera.aspect;
 
-        //move and rotate the cube
-        faceObject.position.set(x,y+0.2,z+0.2);
-        faceObject.rotation.set(bounds.rotationX, bounds.rotationY, bounds.rotationZ, 'XYZ');
-      }
+      //   //move and rotate the cube
+      //   faceObject.position.set(x,y+0.2,z+0.2);
+      //   faceObject.rotation.set(bounds.rotationX, bounds.rotationY, bounds.rotationZ, 'XYZ');
+      // }
       //console.log(face.bounds);
 
       renderer.render(scene, camera);
