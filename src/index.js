@@ -161,7 +161,7 @@ function initTiger(video, context) {
 
 
 
-navigator.mediaDevices.getUserMedia({video: {facingMode: 'user', width: 512, height: 512}})
+navigator.mediaDevices.getUserMedia({video: {facingMode: 'user', width: 640, height: 480}})
   .then(function(stream) {
     document.getElementById('webcam').srcObject = stream;
     document.getElementById('webcam').play();
@@ -187,26 +187,41 @@ navigator.mediaDevices.getUserMedia({video: {facingMode: 'user', width: 512, hei
       manager.update(context.getImageData(0, 0, 640, 480).data);
 
       const face = manager.getFaces()[0];
-      // if (face) {
-      //   const {bounds} = face;
-      //   var tanFOV=Math.tan(camera.aspect*camera.fov*Math.PI/360); //tan(FOV/2), in radians
-      //   var W=bounds.width / 640;  //relative width of the detection window (1-> whole width of the detection window)
-      //   var D=1/(2*W*tanFOV); //distance between the front face of the cube and the camera
+      if (face && !window.stopIt) {
+        const {bounds} = face;
+        var vector = new three.Vector3();
 
-      //   //coords in 2D of the center of the detection window in the viewport :
-      //   var xv=bounds.x;
-      //   var yv=bounds.y;
+vector.set(
+    ( bounds.x / 640 ) * 2 - 1,
+    - ( bounds.y / 480 ) * 2 + 1,
+    0.5 );
 
-      //   //coords in 3D of the center of the cube (in the view coordinates system)
-      //   var z=-D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
-      //   var x=xv*D*tanFOV;
-      //   var y=yv*D*tanFOV/camera.aspect;
+const v = vector.unproject( camera );
 
-      //   //move and rotate the cube
-      //   faceObject.position.set(x,y+0.2,z+0.2);
-      //   faceObject.rotation.set(bounds.rotationX, bounds.rotationY, bounds.rotationZ, 'XYZ');
-      // }
-      //console.log(face.bounds);
+//var dir = vector.sub( camera.position ).normalize();
+
+//var distance = - camera.position.z / dir.z;
+
+//var pos = camera.position.clone().add( dir.multiplyScalar( distance ) );
+        var tanFOV=Math.tan(camera.aspect*camera.fov*Math.PI/360); //tan(FOV/2), in radians
+        var W=bounds.width / 640;  //relative width of the detection window (1-> whole width of the detection window)
+        var D=1/(2*W*tanFOV); //distance between the front face of the cube and the camera
+
+        //coords in 2D of the center of the detection window in the viewport :
+        var xv=bounds.x;
+        var yv=bounds.y;
+
+        //coords in 3D of the center of the cube (in the view coordinates system)
+        var z=-D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
+        var x=xv*D*tanFOV;
+        var y=yv*D*tanFOV/camera.aspect;
+
+        //move and rotate the cube
+        faceObject.position.set(v.x, v.y, -5);
+        console.log(v);
+        //faceObject.rotation.set(bounds.rotationX, bounds.rotationY, bounds.rotationZ, 'XYZ');
+        //console.log(faceObject.position);
+      }
 
       renderer.render(scene, camera);
 
