@@ -1,80 +1,149 @@
-"use strict";
+require('./search');
+const three = require('three');
+window.THREE = three; // for three.js inspector
 
-//SETTINGS of this demo :
-var SETTINGS={
-    rotationOffsetX: 0, //negative -> look upper. in radians
-    cameraFOV: 40,      //in degrees, 3D camera FOV
-    pivotOffsetYZ: [0.2,0.2], //XYZ of the distance between the center of the cube and the pivot
-    detectionThreshold: 0.75, //sensibility, between 0 and 1. Less -> more sensitive
-    detectionHysteresis: 0.05,
-    scale: 1 //scale of the 3D cube
-};
+const brf = {locateFile: (filename) => `dist/${filename}`};
+initializeBRF(brf);
 
-//some globalz :
-var THREEVIDEOTEXTURE, THREERENDERER, THREEFACEOBJ3D, THREEFACEOBJ3DPIVOTED, THREESCENE, THREECAMERA, MOUTHOPENINGMATERIALS=[], TIGERMOUTHHIDEMESH=false;
-var PARTICLESOBJ3D, PARTICLES=[], PARTICLESHOTINDEX=0, PARTICLEDIR;
-var ISDETECTED=false;
+const canvas = document.getElementById('mainCanvas');
+canvas.height = document.documentElement.clientHeight;
+canvas.width = document.documentElement.clientWidth;
 
-//callback : launched if a face is detected or lost. TODO : add a cool particle effect WoW !
-function detect_callback(isDetected){
-    if (isDetected){
-        console.log('INFO in detect_callback() : DETECTED');
-    } else {
-        console.log('INFO in detect_callback() : LOST');
-    }
+// We're gonna work with the small resolution for performance purposes.
+let actualWidth = 640;
+let actualHeight = actualWidth * canvas.height / canvas.width;
+if (actualWidth > actualHeight) {
+  actualWidth += actualHeight;
+  actualHeight = actualWidth - actualHeight;
 }
 
-function generateSprite() { //generate a canvas2D used as texture for particle sprite material
-    var canvas = document.createElement('canvas');
-    canvas.width = 16;
-    canvas.height = 16;
-    var context = canvas.getContext('2d');
-    var gradient = context.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
-    gradient.addColorStop(0, 'rgba(255,255,255,0.5)');
-    gradient.addColorStop(0.2, 'rgba(0,255,255,0.5)');
-    gradient.addColorStop(0.4, 'rgba(0,0,64,0.5)');
-    gradient.addColorStop(1, 'rgba(0,0,0,0.5)');
-    context.fillStyle = gradient;
-    context.fillRect(0, 0, canvas.width, canvas.height);
-    return canvas;
-}
+const aspectRatio = actualWidth / actualHeight;
 
-function initParticle( particle, delay, direction) { //init 1 particle position and movement
-    if (particle.visible) return; //particle is already in move
+const manager = new brf.BRFManager();
+const commonRectangle = new brf.Rectangle(0, 0, actualWidth, actualHeight);
+// Region of interest. Scanning more pixels slows down performance exponentially, so making it a little bit smaller.
+const roiRectangle = new brf.Rectangle(actualWidth*0.2, actualHeight*0.2, actualWidth*0.8, actualHeight*0.8);
+setTimeout(() => manager.init(commonRectangle, roiRectangle, 'svrf-ar-demo'), 4000);
 
-    //tween position :
-    particle.position.set(0.5*(Math.random()-0.5),-0.35+0.5*(Math.random()-0.5),0.5);
-    particle.visible=true;
+function initTiger(video, context) {
+  const scene = new three.Scene();
+  window.scene = scene; // for three.js inspector
+  const renderer = new three.WebGLRenderer({
+    canvas,
+    context,
+  });
 
-    new TWEEN.Tween( particle.position )
-        .to( {x: direction.x*10,
-              y: direction.y*10,
-              z: direction.z*10 }, delay)
-        .start().onComplete(function(){
-            particle.visible=false;
-        });
+  const faceObject = new three.Object3D();
+  faceObject.frustumCulled = false;
+  const pivotedFaceObject = new three.Object3D();
+  pivotedFaceObject.frustumCulled = false;
+  pivotedFaceObject.position.set(0, -0.2, -0.2);
+  faceObject.add(pivotedFaceObject);
 
-    //tween scale :
-    particle.scale.x = particle.scale.y = Math.random() * 0.6
-    new TWEEN.Tween( particle.scale )
-        .to( {x: 0.8, y: 0.8}, delay)
-        .start();
-}
+  //LOAD THE TIGGER MESH
+  let tigerMouthMesh;
+  const tigerMaskLoader = new three.BufferGeometryLoader();
+  tigerMaskLoader.load('TigerHead.json', function(tigerMaskGeometry) {
+    const tigerFaceSkinMaterial = build_customMaskMaterial('headTexture2.png');
+    const tigerEyesMaterial = build_customMaskMaterial('white.png');
 
-function build_customMaskMaterial(textureURL){
-    var vertexShaderSource=THREE.ShaderLib.lambert.vertexShader;
-    vertexShaderSource=vertexShaderSource.replace('void main() {', 'varying vec3 vPos; uniform float mouthOpening; void main(){ vPos=position;');
-    var glslSource=[
+    const whiskersMaterial = new three.MeshLambertMaterial({
+      color: 0xffffff
+    });
+    const insideEarsMaterial = new three.MeshBasicMaterial({
+      color: 0x331100
+    });
+    const tigerMaskMesh = new three.Mesh(tigerMaskGeometry, [
+      whiskersMaterial, tigerEyesMaterial, tigerFaceSkinMaterial, insideEarsMaterial
+    ]);
+    tigerMaskMesh.scale.set(2, 3, 2);
+    tigerMaskMesh.position.set(0., 0.2, -0.48);
+
+      //small black quad to hide inside the mouth
+      //(visible only if the user opens the mouth)
+    tigerMouthMesh = new three.Mesh(
+        new three.PlaneBufferGeometry(0.5, 0.6),
+        new three.MeshBasicMaterial({color: 0x000000})
+    );
+    tigerMouthMesh.position.set(0, -0.35, 0.5);
+    pivotedFaceObject.add(tigerMaskMesh, tigerMouthMesh);
+  });
+
+  scene.add(faceObject);
+
+  //AND THERE WAS LIGHT
+  const ambientLight = new three.AmbientLight(0xffffff, 0.3);
+  const directLight = new three.DirectionalLight(0xff8833, 2);
+  directLight.position.set(0, 0.5, 1);
+
+  scene.add(ambientLight, directLight);
+
+  //init video texture with red
+  const videoTexture = new three.DataTexture(new Uint8Array([255,0,0]), 1, 1, three.RGBFormat);
+  videoTexture.needsUpdate = true;
+
+  //CREATE THE VIDEO BACKGROUND
+  const videoMaterial = new three.RawShaderMaterial({
+      depthWrite: false,
+      depthTest: false,
+      vertexShader: "attribute vec2 position;\n\
+          varying vec2 vUV;\n\
+          void main(void){\n\
+              gl_Position=vec4(position, 0., 1.);\n\
+              vUV=0.5+0.5*position;\n\
+          }",
+      fragmentShader: "precision lowp float;\n\
+          uniform sampler2D samplerVideo;\n\
+          varying vec2 vUV;\n\
+          void main(void){\n\
+              gl_FragColor=texture2D(samplerVideo, vUV);\n\
+          }",
+        uniforms:{
+          samplerVideo: {value: videoTexture}
+        }
+  });
+  const videoGeometry = new three.BufferGeometry()
+  const videoScreenCorners = new Float32Array([-1,-1,   1,-1,   1,1,   -1,1]);
+  videoGeometry.addAttribute('position', new three.BufferAttribute( videoScreenCorners, 2 ) );
+  videoGeometry.setIndex(new three.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
+  const videoMesh=new three.Mesh(videoGeometry, videoMaterial);
+  videoMesh.onAfterRender = function() {
+      //replace THREEVIDEOTEXTURE.__webglTexture by the real video texture
+      renderer.properties.update(videoTexture, '__webglTexture', video);
+      videoTexture.magFilter = three.LinearFilter;
+      videoTexture.minFilter = three.LinearFilter;
+      delete(videoMesh.onAfterRender);
+  };
+  videoMesh.renderOrder = -1000; //render first
+  videoMesh.frustumCulled = false;
+  scene.add(videoMesh);
+
+  const camera = new three.PerspectiveCamera(40, aspectRatio, 0.1, 100);
+  const mouthOpeningMaterials = [];
+
+  return {renderer, camera, scene, faceObject, handleMouthOpen};
+
+  function handleMouthOpen(coefficient) {
+    mouthOpeningMaterials.forEach((m) => {
+      m.uniforms.mouthOpening.value = coefficient;
+    });
+    tigerMouthMesh.scale.setY(1 + coefficient*0.5);
+  }
+
+  function build_customMaskMaterial(textureURL) {
+    let vertexShaderSource = three.ShaderLib.lambert.vertexShader;
+    vertexShaderSource = vertexShaderSource.replace('void main() {', 'varying vec3 vPos; uniform float mouthOpening; void main(){ vPos=position;');
+    let glslSource = [
         'float isLowerJaw=step(position.y+position.z*0.2, 0.0);//-0.13);',
         //'transformed+=vec3(0., -0.1, 0.)*isLowerJaw*mouthOpening;'
         'float theta=isLowerJaw*mouthOpening*3.14/12.0;',
         'transformed.yz=mat2(cos(theta), sin(theta),-sin(theta), cos(theta))*transformed.yz;'
 
     ].join('\n');
-    vertexShaderSource=vertexShaderSource.replace('#include <begin_vertex>', '#include <begin_vertex>\n'+glslSource);
+    vertexShaderSource = vertexShaderSource.replace('#include <begin_vertex>', '#include <begin_vertex>\n' + glslSource);
 
-    var fragmentShaderSource=THREE.ShaderLib.lambert.fragmentShader;
-    glslSource=[
+    let fragmentShaderSource = three.ShaderLib.lambert.fragmentShader;
+    glslSource = [
         'float alphaMask=1.0;', //initialize the opacity coefficient (1.0->fully opaque)
         'vec2 pointToEyeL=vPos.xy-vec2(0.25,0.15);', //position of left eye
         'vec2 pointToEyeR=vPos.xy-vec2(-0.25,0.15);', //position of right eye
@@ -91,225 +160,96 @@ function build_customMaskMaterial(textureURL){
         'videoColor.rgb=videoColorGS*vec3(1.5,0.6,0.0);', //color video with orange
         'gl_FragColor=mix(videoColor, gl_FragColor, alphaMask);' //mix video background with mask color
     ].join('\n');
-    fragmentShaderSource=fragmentShaderSource.replace('void main() {', 'varying vec3 vPos; uniform sampler2D samplerVideo; uniform vec2 resolution; void main(){');
-    fragmentShaderSource=fragmentShaderSource.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n'+glslSource);
+    fragmentShaderSource = fragmentShaderSource.replace('void main() {', 'varying vec3 vPos; uniform sampler2D samplerVideo; uniform vec2 resolution; void main(){');
+    fragmentShaderSource = fragmentShaderSource.replace('#include <dithering_fragment>', '#include <dithering_fragment>\n' + glslSource);
 
-    var mat=new THREE.ShaderMaterial({
+    const mat = new three.ShaderMaterial({
         vertexShader: vertexShaderSource,
         fragmentShader: fragmentShaderSource,
         uniforms: Object.assign({
-            samplerVideo: {value: THREEVIDEOTEXTURE},
-            resolution: {value: new THREE.Vector2(THREERENDERER.getSize().width, THREERENDERER.getSize().height)},
+            samplerVideo: {value: videoTexture},
+            resolution: {value: new three.Vector2(renderer.getSize().width, renderer.getSize().height)},
             mouthOpening: {value: 0}
-        }, THREE.ShaderLib.lambert.uniforms),
+        }, three.ShaderLib.lambert.uniforms),
         lights: true,
         transparent: true
     });
-    var texture=new THREE.TextureLoader().load(textureURL);
-    mat.uniforms.map={value: texture};
-    mat.map=texture;
+    const texture = new three.TextureLoader().load(textureURL);
+    mat.uniforms.map = {value: texture};
+    mat.map = texture;
 
-    MOUTHOPENINGMATERIALS.push(mat);
+    mouthOpeningMaterials.push(mat);
     return mat;
+  }
 }
 
-
-//build the 3D. called once when Jeeliz Face Filter is OK
-function init_threeScene(spec){
-    //INIT THE THREE.JS context
-    THREERENDERER=new THREE.WebGLRenderer({
-        context: spec.GL,
-        canvas: spec.canvasElement
-    });
-
-    //COMPOSITE OBJECT WHICH WILL FOLLOW THE HEAD
-    //in fact we create 2 objects to be able to shift the pivot point
-    THREEFACEOBJ3D=new THREE.Object3D();
-    THREEFACEOBJ3D.frustumCulled=false;
-    THREEFACEOBJ3DPIVOTED=new THREE.Object3D();
-    THREEFACEOBJ3DPIVOTED.frustumCulled=false;
-    THREEFACEOBJ3DPIVOTED.position.set(0, -SETTINGS.pivotOffsetYZ[0], -SETTINGS.pivotOffsetYZ[1]);
-    THREEFACEOBJ3DPIVOTED.scale.set(SETTINGS.scale, SETTINGS.scale, SETTINGS.scale);
-    THREEFACEOBJ3D.add(THREEFACEOBJ3DPIVOTED);
-
-    //LOAD THE TIGGER MESH
-    var tigerMaskLoader=new THREE.BufferGeometryLoader();
-    tigerMaskLoader.load('TigerHead.json', function(tigerMaskGeom){
-      var tigerFaceSkinMat=build_customMaskMaterial('headTexture2.png');
-      var tigerEyesMat=build_customMaskMaterial('white.png');
-
-      var whiskersMat=new THREE.MeshLambertMaterial({
-        color: 0xffffff
-      });
-      var insideEarsMat=new THREE.MeshBasicMaterial({
-        color: 0x331100
-      });
-      var tigerMaskMesh=new THREE.Mesh(tigerMaskGeom, [
-        whiskersMat, tigerEyesMat, tigerFaceSkinMat, insideEarsMat
-        ]);
-      tigerMaskMesh.scale.set(2,3,2);
-      tigerMaskMesh.position.set(0., 0.2, -0.48);
-
-        //small black quad to hide inside the mouth
-        //(visible only if the user opens the mouth)
-      TIGERMOUTHHIDEMESH=new THREE.Mesh(
-            new THREE.PlaneBufferGeometry(0.5,0.6),
-            new THREE.MeshBasicMaterial({color: 0x000000})
-        );
-        TIGERMOUTHHIDEMESH.position.set(0,-0.35,0.5);
-        THREEFACEOBJ3DPIVOTED.add(tigerMaskMesh, TIGERMOUTHHIDEMESH);
-    });
-
-    //BUILD PARTICLES :
-    PARTICLESOBJ3D = new THREE.Object3D();
-    const particleMaterial = new THREE.SpriteMaterial({
-        map: new THREE.CanvasTexture(generateSprite()),
-        blending: THREE.AdditiveBlending
-    });
-    for ( let i = 0; i <= 200; i++ ) { //we work with a fixed number of particle to avoir memory dynamic allowation
-        var particle = new THREE.Sprite(particleMaterial);
-        particle.scale.multiplyScalar(0);
-        particle.visible=false;
-        PARTICLES.push(particle);
-        PARTICLESOBJ3D.add(particle);
-    }
-    THREEFACEOBJ3DPIVOTED.add(PARTICLESOBJ3D);
-    PARTICLEDIR=new THREE.Vector3();
-
-    THREESCENE.add(THREEFACEOBJ3D);
-
-    //AND THERE WAS LIGHT
-    var ambientLight=new THREE.AmbientLight(0xffffff, 0.3);
-    var dirLight=new THREE.DirectionalLight(0xff8833, 2);
-    dirLight.position.set(0,0.5,1);
-
-    THREESCENE.add(ambientLight, dirLight);
-
-    //init video texture with red
-    THREEVIDEOTEXTURE=new THREE.DataTexture( new Uint8Array([255,0,0]), 1, 1, THREE.RGBFormat);
-    THREEVIDEOTEXTURE.needsUpdate=true;
-
-    //CREATE THE VIDEO BACKGROUND
-    var videoMaterial=new THREE.RawShaderMaterial({
-        depthWrite: false,
-        depthTest: false,
-        vertexShader: "attribute vec2 position;\n\
-            varying vec2 vUV;\n\
-            void main(void){\n\
-                gl_Position=vec4(position, 0., 1.);\n\
-                vUV=0.5+0.5*position;\n\
-            }",
-        fragmentShader: "precision lowp float;\n\
-            uniform sampler2D samplerVideo;\n\
-            varying vec2 vUV;\n\
-            void main(void){\n\
-                gl_FragColor=texture2D(samplerVideo, vUV);\n\
-            }",
-         uniforms:{
-            samplerVideo: {value: THREEVIDEOTEXTURE}
-         }
-    });
-    var videoGeometry=new THREE.BufferGeometry()
-    var videoScreenCorners=new Float32Array([-1,-1,   1,-1,   1,1,   -1,1]);
-    videoGeometry.addAttribute( 'position', new THREE.BufferAttribute( videoScreenCorners, 2 ) );
-    videoGeometry.setIndex(new THREE.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
-    var videoMesh=new THREE.Mesh(videoGeometry, videoMaterial);
-    videoMesh.onAfterRender=function(){
-        //replace THREEVIDEOTEXTURE.__webglTexture by the real video texture
-        THREERENDERER.properties.update(THREEVIDEOTEXTURE, '__webglTexture', spec.videoTexture);
-        THREEVIDEOTEXTURE.magFilter=THREE.LinearFilter;
-        THREEVIDEOTEXTURE.minFilter=THREE.LinearFilter;
-        delete(videoMesh.onAfterRender);
-    };
-    videoMesh.renderOrder=-1000; //render first
-    videoMesh.frustumCulled=false;
-    THREESCENE.add(videoMesh);
-
-    //CREATE THE CAMERA
-    var aspecRatio=spec.canvasElement.width / spec.canvasElement.height;
-    THREECAMERA=new THREE.PerspectiveCamera(SETTINGS.cameraFOV, aspecRatio, 0.1, 100);
-} //end init_threeScene()
-
-//launched by body.onload() :
-function main(){
-    JEEFACEFILTERAPI.init({
-        canvasId: 'jeeFaceFilterCanvas',
-        NNCpath: './dist/', //root of NNC.json file
-        callbackReady: function(errCode, spec){
-            if (errCode){
-                console.log('AN ERROR HAPPENS. SORRY BRO :( . ERR =', errCode);
-                return;
-            }
-
-            console.log('INFO : JEEFACEFILTERAPI IS READY');
-            init_threeScene(spec);
-        }, //end callbackReady()
-
-        //called at each render iteration (drawing loop)
-        callbackTrack: function(detectState){
-            if (ISDETECTED && detectState.detected<SETTINGS.detectionThreshold-SETTINGS.detectionHysteresis){
-                //DETECTION LOST
-                detect_callback(false);
-                ISDETECTED=false;
-            } else if (!ISDETECTED && detectState.detected>SETTINGS.detectionThreshold+SETTINGS.detectionHysteresis){
-                //FACE DETECTED
-                detect_callback(true);
-                ISDETECTED=true;
-            }
-
-            if (ISDETECTED){
-                //move the cube in order to fit the head
-                var tanFOV=Math.tan(THREECAMERA.aspect*THREECAMERA.fov*Math.PI/360); //tan(FOV/2), in radians
-                var W=detectState.s;  //relative width of the detection window (1-> whole width of the detection window)
-                var D=1/(2*W*tanFOV); //distance between the front face of the cube and the camera
-
-                //coords in 2D of the center of the detection window in the viewport :
-                var xv=detectState.x;
-                var yv=detectState.y;
-
-                //coords in 3D of the center of the cube (in the view coordinates system)
-                var z=-D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
-                var x=xv*D*tanFOV;
-                var y=yv*D*tanFOV/THREECAMERA.aspect;
-
-                //move and rotate the cube
-                THREEFACEOBJ3D.position.set(x,y+SETTINGS.pivotOffsetYZ[0],z+SETTINGS.pivotOffsetYZ[1]);
-                THREEFACEOBJ3D.rotation.set(detectState.rx+SETTINGS.rotationOffsetX, detectState.ry, detectState.rz, "XYZ");
-            }
-
-            //reinitialize the state of THREE.JS because JEEFACEFILTER have changed stuffs
-            THREERENDERER.state.reset();
-
-            if (ISDETECTED){
-                //update mouth opening
-                var mouthOpening=(detectState.expressions[0]-0.2)*5.;
-                mouthOpening=Math.min(Math.max(mouthOpening, 0), 1);
-                if (mouthOpening>0.5){
-                    var theta=Math.random()*6.28;
-                    PARTICLEDIR.set(0.5*Math.cos(theta),0.5*Math.sin(theta),1).applyEuler(THREEFACEOBJ3D.rotation);
-                    initParticle(PARTICLES[PARTICLESHOTINDEX], 2000+40*Math.random(), PARTICLEDIR);
-                    PARTICLESHOTINDEX=(PARTICLESHOTINDEX+1)%PARTICLES.length;
-                }
-
-                MOUTHOPENINGMATERIALS.forEach(function(mat){
-                    mat.uniforms.mouthOpening.value=mouthOpening;
-                });
-                if(TIGERMOUTHHIDEMESH){
-                    TIGERMOUTHHIDEMESH.scale.setY(1.+mouthOpening*0.4);
-                }
-            }
-            TWEEN.update();
-
-            //trigger the render of the THREE.JS SCENE
-            THREERENDERER.render(THREESCENE, THREECAMERA);
-        } //end callbackTrack()
-    }); //end JEEFACEFILTERAPI.init call
-} //end main()
-
-// Creating the scene immediately to export it.
-THREESCENE=new THREE.Scene();
-
-module.exports = {
-    scene: THREESCENE,
-    start: main,
+const streamOptions = {
+  video: {
+    facingMode: 'user',
+    width: actualWidth,
+    height: actualHeight,
+  }
 };
+navigator.mediaDevices.getUserMedia(streamOptions).then(handleStream);
+
+function handleStream(stream) {
+  const webcam = document.getElementById('webcam');
+  webcam.srcObject = stream;
+  webcam.play();
+
+  const brfCanvas = document.createElement('canvas');
+  brfCanvas.width = actualWidth;
+  brfCanvas.height = actualHeight;
+
+  const gl = canvas.getContext('webgl');
+  const video = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, video);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  const {camera, renderer, scene, faceObject, handleMouthOpen} = initTiger(video, gl);
+
+  function animate() {
+    const context = brfCanvas.getContext('2d');
+    context.drawImage(webcam, 0, 0, actualWidth, actualHeight);
+    manager.update(context.getImageData(0, 0, actualWidth, actualHeight).data);
+
+    const face = manager.getFaces()[0];
+    if (face) { // todo: check tracking state
+      const {bounds} = face;
+      const tanFOV = Math.tan(camera.aspect * camera.fov * Math.PI/360); //tan(FOV/2), in radians
+      const W = face.scale / actualWidth;  //relative width of the detection window (1-> whole width of the detection window)
+      const D = 1 / (2*W*tanFOV); //distance between the front face of the cube and the camera
+
+      //coords in 2D of the center of the detection window in the viewport :
+      const xv = (bounds.x / actualWidth)*2 - 1;
+      const yv = (-bounds.y / actualHeight)*2 + 1;
+
+      const upMouthPoint = {x: face.vertices[62*2], y: face.vertices[62*2+1]};
+      const downMouthPoint = {x: face.vertices[66*2], y: face.vertices[66*2+1]};
+      const mouthOpening = Math.min(Math.sqrt(
+        (upMouthPoint.x - downMouthPoint.x) * (upMouthPoint.x - downMouthPoint.x) +
+        (upMouthPoint.y - downMouthPoint.y) * (upMouthPoint.y - downMouthPoint.y)) / 20, 1);
+      handleMouthOpen(mouthOpening);
+
+      //coords in 3D of the center of the cube (in the view coordinates system)
+      var z = -D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
+      var x = xv*D*tanFOV;
+      var y = yv*D*tanFOV/camera.aspect;
+
+      //move and rotate the cube
+      faceObject.position.set(x+0.9, y-0.4, z);
+      faceObject.rotation.set(face.rotationX, -face.rotationY, -face.rotationZ, 'XYZ');
+      //console.log(faceObject.position);
+    }
+
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
+    renderer.render(scene, camera);
+
+    requestAnimationFrame(animate);
+  }
+
+  setTimeout(animate, 4000);
+}
