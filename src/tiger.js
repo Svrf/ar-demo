@@ -1,39 +1,21 @@
-require('./search');
+//require('./search');
+
+const config = require('./config');
 const three = require('three');
 window.THREE = three; // for three.js inspector
 
-const brf = {locateFile: (filename) => `dist/${filename}`};
-initializeBRF(brf);
+let camera, faceObject, mouthOpeningMaterials, renderer, tigerMouthMesh;
+const scene = new three.Scene();
+exports.scene = scene;
 
-const canvas = document.getElementById('mainCanvas');
-canvas.height = document.documentElement.clientHeight;
-canvas.width = document.documentElement.clientWidth;
-
-// We're gonna work with the small resolution for performance purposes.
-let actualWidth = 640;
-let actualHeight = actualWidth * canvas.height / canvas.width;
-if (actualWidth > actualHeight) {
-  actualWidth += actualHeight;
-  actualHeight = actualWidth - actualHeight;
-}
-
-const aspectRatio = actualWidth / actualHeight;
-
-const manager = new brf.BRFManager();
-const commonRectangle = new brf.Rectangle(0, 0, actualWidth, actualHeight);
-// Region of interest. Scanning more pixels slows down performance exponentially, so making it a little bit smaller.
-const roiRectangle = new brf.Rectangle(actualWidth*0.2, actualHeight*0.2, actualWidth*0.8, actualHeight*0.8);
-setTimeout(() => manager.init(commonRectangle, roiRectangle, 'svrf-ar-demo'), 4000);
-
-function initTiger(video, context) {
-  const scene = new three.Scene();
+exports.initTiger = function(video, context) {
   window.scene = scene; // for three.js inspector
-  const renderer = new three.WebGLRenderer({
-    canvas,
+  renderer = new three.WebGLRenderer({
+    canvas: document.getElementById('mainCanvas'),
     context,
   });
 
-  const faceObject = new three.Object3D();
+  faceObject = new three.Object3D();
   faceObject.frustumCulled = false;
   const pivotedFaceObject = new three.Object3D();
   pivotedFaceObject.frustumCulled = false;
@@ -41,7 +23,10 @@ function initTiger(video, context) {
   faceObject.add(pivotedFaceObject);
 
   //LOAD THE TIGGER MESH
-  let tigerMouthMesh;
+  tigerMouthMesh = new three.Mesh(
+    new three.PlaneBufferGeometry(0.5, 0.6),
+    new three.MeshBasicMaterial({color: 0x000000})
+  );
   const tigerMaskLoader = new three.BufferGeometryLoader();
   tigerMaskLoader.load('TigerHead.json', function(tigerMaskGeometry) {
     const tigerFaceSkinMaterial = build_customMaskMaterial('headTexture2.png');
@@ -61,10 +46,6 @@ function initTiger(video, context) {
 
       //small black quad to hide inside the mouth
       //(visible only if the user opens the mouth)
-    tigerMouthMesh = new three.Mesh(
-        new three.PlaneBufferGeometry(0.5, 0.6),
-        new three.MeshBasicMaterial({color: 0x000000})
-    );
     tigerMouthMesh.position.set(0, -0.35, 0.5);
     pivotedFaceObject.add(tigerMaskMesh, tigerMouthMesh);
   });
@@ -118,17 +99,8 @@ function initTiger(video, context) {
   videoMesh.frustumCulled = false;
   scene.add(videoMesh);
 
-  const camera = new three.PerspectiveCamera(40, aspectRatio, 0.1, 100);
-  const mouthOpeningMaterials = [];
-
-  return {renderer, camera, scene, faceObject, handleMouthOpen};
-
-  function handleMouthOpen(coefficient) {
-    mouthOpeningMaterials.forEach((m) => {
-      m.uniforms.mouthOpening.value = coefficient;
-    });
-    tigerMouthMesh.scale.setY(1 + coefficient*0.5);
-  }
+  camera = new three.PerspectiveCamera(config.fov, config.aspectRatio, 0.1, 100);
+  mouthOpeningMaterials = [];
 
   function build_customMaskMaterial(textureURL) {
     let vertexShaderSource = three.ShaderLib.lambert.vertexShader;
@@ -183,73 +155,22 @@ function initTiger(video, context) {
   }
 }
 
-const streamOptions = {
-  video: {
-    facingMode: 'user',
-    width: actualWidth,
-    height: actualHeight,
-  }
-};
-navigator.mediaDevices.getUserMedia(streamOptions).then(handleStream);
+exports.renderTiger = function({position, rotation, mouth}) {
+  faceObject.visible = true;
+  tigerMouthMesh.visible = true;
 
-function handleStream(stream) {
-  const webcam = document.getElementById('webcam');
-  webcam.srcObject = stream;
-  webcam.play();
+  faceObject.position.set(position.x, position.y, position.z);
+  faceObject.rotation.set(rotation.x, -rotation.y, -rotation.z, 'XYZ');
 
-  const brfCanvas = document.createElement('canvas');
-  brfCanvas.width = actualWidth;
-  brfCanvas.height = actualHeight;
+  mouthOpeningMaterials.forEach((m) => {
+    m.uniforms.mouthOpening.value = mouth;
+  });
+  tigerMouthMesh.scale.setY(0.9 + mouth*0.5);
 
-  const gl = canvas.getContext('webgl');
-  const video = gl.createTexture();
-  gl.bindTexture(gl.TEXTURE_2D, video);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  renderer.render(scene, camera);
+}
 
-  const {camera, renderer, scene, faceObject, handleMouthOpen} = initTiger(video, gl);
-
-  function animate() {
-    const context = brfCanvas.getContext('2d');
-    context.drawImage(webcam, 0, 0, actualWidth, actualHeight);
-    manager.update(context.getImageData(0, 0, actualWidth, actualHeight).data);
-
-    const face = manager.getFaces()[0];
-    if (face) { // todo: check tracking state
-      const {bounds} = face;
-      const tanFOV = Math.tan(camera.aspect * camera.fov * Math.PI/360); //tan(FOV/2), in radians
-      const W = face.scale / actualWidth;  //relative width of the detection window (1-> whole width of the detection window)
-      const D = 1 / (2*W*tanFOV); //distance between the front face of the cube and the camera
-
-      //coords in 2D of the center of the detection window in the viewport :
-      const xv = (bounds.x / actualWidth)*2 - 1;
-      const yv = (-bounds.y / actualHeight)*2 + 1;
-
-      const upMouthPoint = {x: face.vertices[62*2], y: face.vertices[62*2+1]};
-      const downMouthPoint = {x: face.vertices[66*2], y: face.vertices[66*2+1]};
-      const mouthOpening = Math.min(Math.sqrt(
-        (upMouthPoint.x - downMouthPoint.x) * (upMouthPoint.x - downMouthPoint.x) +
-        (upMouthPoint.y - downMouthPoint.y) * (upMouthPoint.y - downMouthPoint.y)) / 20, 1);
-      handleMouthOpen(mouthOpening);
-
-      //coords in 3D of the center of the cube (in the view coordinates system)
-      var z = -D-0.5;   // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
-      var x = xv*D*tanFOV;
-      var y = yv*D*tanFOV/camera.aspect;
-
-      //move and rotate the cube
-      faceObject.position.set(x+0.9, y-0.4, z);
-      faceObject.rotation.set(face.rotationX, -face.rotationY, -face.rotationZ, 'XYZ');
-      //console.log(faceObject.position);
-    }
-
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
-    renderer.render(scene, camera);
-
-    requestAnimationFrame(animate);
-  }
-
-  setTimeout(animate, 4000);
+exports.hideTiger = function() {
+  faceObject.visible = false;
+  tigerMouthMesh.visible = false;
 }

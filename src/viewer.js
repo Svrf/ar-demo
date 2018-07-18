@@ -10,18 +10,18 @@ const {
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
 
-const canvas = document.getElementById('jeeFaceFilterCanvas');
-// Need to set it with attributes; otherwise jeelizFaceFilter wouldn't work properly
-canvas.height = document.documentElement.clientHeight;
-canvas.width = document.documentElement.clientWidth;
+const canvas = document.getElementById('mainCanvas');
+let controllers = [];
+
+// todo: remove window.scene reference
 
 exports.removeBackground = () => {
   // Removing the only Mesh (either camera or panorama background).
-  const background = scene.children.find(c => c.type === 'Mesh');
-  scene.remove(background);
+  const background = window.scene.children.find(c => c.type === 'Mesh');
+  window.scene.remove(background);
   background.geometry.dispose();
   background.material.dispose();
-}
+};
 
 exports.addPhotoBackground = (media) => {
   const url = media.files.images['4096'] || media.files.images.max;
@@ -35,18 +35,15 @@ exports.addPhotoBackground = (media) => {
     const mesh = new Mesh(sphere, material);
     texture.minFilter = LinearFilter;
     texture.needsUpdate = true;
-    scene.add(mesh);
+    window.scene.add(mesh);
 
-    const controllers = [
+    controllers = [
       new MouseController(mesh, canvas),
       new OrientationController(mesh),
     ];
-
-    function animate () {
-      controllers.forEach((c) => c.tick());
-      requestAnimationFrame(animate);
-    };
-
-    animate();
   };
-}
+};
+
+exports.tick = function () {
+  controllers.forEach((c) => c.tick());
+};
