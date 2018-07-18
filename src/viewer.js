@@ -18,6 +18,7 @@ let controllers = [];
 exports.removeBackground = () => {
   // Removing the only Mesh (either camera or panorama background).
   const background = window.scene.children.find(c => c.type === 'Mesh');
+  controllers.forEach((c) => c.dispose());
   window.scene.remove(background);
   background.geometry.dispose();
   background.material.dispose();

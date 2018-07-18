@@ -1,5 +1,3 @@
-//require('./search');
-
 const config = require('./config');
 const three = require('three');
 window.THREE = three; // for three.js inspector
@@ -170,7 +168,9 @@ exports.renderTiger = function({position, rotation, mouth}) {
   renderer.render(scene, camera);
 }
 
-exports.hideTiger = function() {
+exports.renderBackgroundOnly = function() {
   faceObject.visible = false;
   tigerMouthMesh.visible = false;
+
+  renderer.render(scene, camera);
 }

@@ -74,9 +74,9 @@ module.exports = class MouseController extends BaseController {
   }
 
   dispose() {
-    canvas.removeEventListener('mouseup', this.reset);
-    canvas.removeEventListener('mouseout', this.reset);
+    this.canvas.removeEventListener('mouseup', this.reset);
+    this.canvas.removeEventListener('mouseout', this.reset);
 
-    canvas.removeEventListener('mousemove', this.handleMouseMove);
+    this.canvas.removeEventListener('mousemove', this.handleMouseMove);
   }
 }

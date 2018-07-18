@@ -1,6 +1,6 @@
 const trackFace = require('./tracking');
 const config = require('./config');
-const {hideTiger, initTiger, renderTiger} = require('./tiger');
+const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
 const {tick: controllersTick} = require('./viewer');
 require('./search');
 
@@ -19,10 +19,11 @@ function animate() {
   requestAnimationFrame(animate);
 
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
+  controllersTick();
 
   const face = trackFace();
   if (!face) {
-    hideTiger();
+    renderBackgroundOnly();
     return;
   }
 
@@ -42,7 +43,6 @@ function animate() {
   };
 
   renderTiger({position, rotation: face.rotation, mouth: face.mouth});
-  controllersTick();
 }
 
 animate();

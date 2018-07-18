@@ -6,11 +6,12 @@ canvas.height = fullHeight;
 canvas.width = fullWidth;
 
 // We're gonna work with the small resolution for performance purposes.
+// The longest side should be 640px.
 let actualWidth = 640;
 let actualHeight = actualWidth * fullHeight / fullWidth;
-if (actualWidth > actualHeight) {
-  actualWidth += actualHeight;
-  actualHeight = actualWidth - actualHeight;
+if (actualWidth < actualHeight) {
+  actualWidth = 640 * 640 / actualHeight;
+  actualHeight = 640;
 }
 
 const aspectRatio = fullWidth / fullHeight;
