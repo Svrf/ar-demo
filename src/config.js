@@ -14,6 +14,12 @@ if (actualWidth < actualHeight) {
   actualHeight = 640;
 }
 
+if(window.matchMedia('(orientation:portrait)').matches) {
+  const temp = actualWidth;
+  actualWidth = actualHeight;
+  actualHeight = temp;
+}
+
 const aspectRatio = fullWidth / fullHeight;
 const fov = 40;
 

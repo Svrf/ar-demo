@@ -7,11 +7,34 @@ require('./search');
 const webcam = document.getElementById('webcam');
 const gl = document.getElementById('mainCanvas').getContext('webgl');
 const video = gl.createTexture();
-gl.bindTexture(gl.TEXTURE_2D, video);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+const streamOptions = {
+  video: {
+    facingMode: {ideal: 'user'},
+    width: {
+      max: 1280,
+      ideal: config.actualWidth,
+    },
+    height: {
+      max: 720,
+      ideal: config.actualHeight,
+    },
+  }
+};
+navigator.mediaDevices.getUserMedia(streamOptions).then((stream) => {
+  webcam.srcObject = stream;
+  webcam.play();
+});
+
+webcam.addEventListener('loadeddata', () => {
+  gl.bindTexture(gl.TEXTURE_2D, video);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+
+  animate();
+});
 
 initTiger(video, gl);
 
@@ -44,5 +67,3 @@ function animate() {
 
   renderTiger({position, rotation: face.rotation, mouth: face.mouth});
 }
-
-animate();

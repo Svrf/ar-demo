@@ -19,15 +19,6 @@ function checkSdk() {
 
 checkSdk();
 
-const streamOptions = {
-  video: {
-    facingMode: 'user',
-    width: actualWidth,
-    height: actualHeight,
-  }
-};
-navigator.mediaDevices.getUserMedia(streamOptions).then(handleStream);
-
 const webcam = document.getElementById('webcam');
 
 const brfCanvas = document.createElement('canvas');
@@ -71,9 +62,4 @@ function calculateMouthOpening(face) {
   return Math.min(Math.sqrt(
     (upMouthPoint.x - downMouthPoint.x) * (upMouthPoint.x - downMouthPoint.x) +
     (upMouthPoint.y - downMouthPoint.y) * (upMouthPoint.y - downMouthPoint.y)) / 20, 1);
-}
-
-function handleStream(stream) {
-  webcam.srcObject = stream;
-  webcam.play();
 }

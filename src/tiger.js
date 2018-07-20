@@ -4,10 +4,10 @@ window.THREE = three; // for three.js inspector
 
 let camera, faceObject, mouthOpeningMaterials, renderer, tigerMouthMesh;
 const scene = new three.Scene();
+window.scene = scene; // for three.js inspector
 exports.scene = scene;
 
 exports.initTiger = function(video, context) {
-  window.scene = scene; // for three.js inspector
   renderer = new three.WebGLRenderer({
     canvas: document.getElementById('mainCanvas'),
     context,
@@ -85,9 +85,9 @@ exports.initTiger = function(video, context) {
   const videoScreenCorners = new Float32Array([-1,-1,   1,-1,   1,1,   -1,1]);
   videoGeometry.addAttribute('position', new three.BufferAttribute( videoScreenCorners, 2 ) );
   videoGeometry.setIndex(new three.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
-  const videoMesh=new three.Mesh(videoGeometry, videoMaterial);
+  const videoMesh = new three.Mesh(videoGeometry, videoMaterial);
   videoMesh.onAfterRender = function() {
-      //replace THREEVIDEOTEXTURE.__webglTexture by the real video texture
+      //replace videoTexture.__webglTexture by the real video texture
       renderer.properties.update(videoTexture, '__webglTexture', video);
       videoTexture.magFilter = three.LinearFilter;
       videoTexture.minFilter = three.LinearFilter;
