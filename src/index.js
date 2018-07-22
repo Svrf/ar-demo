@@ -8,19 +8,22 @@ const webcam = document.getElementById('webcam');
 const gl = document.getElementById('mainCanvas').getContext('webgl');
 const video = gl.createTexture();
 
+const isPortrait = window.matchMedia('(orientation:portrait)').matches;
+
 const streamOptions = {
   video: {
     facingMode: {ideal: 'user'},
-    width: {
+    [isPortrait ? 'height': 'width']: {
       max: 1280,
       ideal: config.actualWidth,
     },
-    height: {
+    [isPortrait ? 'width': 'height']: {
       max: 720,
       ideal: config.actualHeight,
     },
   }
 };
+
 navigator.mediaDevices.getUserMedia(streamOptions).then((stream) => {
   webcam.srcObject = stream;
   webcam.play();
@@ -31,16 +34,17 @@ webcam.addEventListener('loadeddata', () => {
   animate();
 });
 
-initTiger(video, gl);
+const videoCanvas = document.createElement('canvas');
+videoCanvas.width = config.actualWidth;
+videoCanvas.height = config.actualHeight;
+const videoContext = videoCanvas.getContext('2d');
+
+initTiger(videoCanvas);
 
 function animate() {
   requestAnimationFrame(animate);
 
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
+  videoContext.drawImage(webcam, 0, 0);
   controllersTick();
 
   const face = trackFace();
