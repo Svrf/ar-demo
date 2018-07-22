@@ -59,6 +59,20 @@ h1 {
   background-size: contain;
 }
 
+#playButton {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid white;
+  border-radius: 8px;
+  color: white;
+  cursor: pointer;
+  display: block;
+  font-size: 4em;
+  margin: 0 auto 20px;
+  padding: 0.3em;
+  width: 40%;
+  z-index: 100;
+}
+
 #searchContainer {
   position: fixed;
   top: 0;

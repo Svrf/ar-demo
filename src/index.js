@@ -8,8 +8,21 @@ const webcam = document.getElementById('webcam');
 const gl = document.getElementById('mainCanvas').getContext('webgl');
 const video = gl.createTexture();
 
-const streamOptions = {
-  video: {
+const play = document.getElementById('playButton');
+play.addEventListener('click', onClick);
+
+function onClick() {
+  if (webcam) {
+    webcam.play();
+    play.style.display = "none";
+    play.removeEventListener('click', onClick);
+  }
+}
+
+const isSafari = !!navigator.userAgent && /safari/i.test(navigator.userAgent);
+const streamOptions = isSafari ?
+  { video: true } :
+  { video: {
     facingMode: {ideal: 'user'},
     width: {
       max: 1280,
@@ -19,29 +32,34 @@ const streamOptions = {
       max: 720,
       ideal: config.actualHeight,
     },
-  }
-};
-navigator.mediaDevices.getUserMedia(streamOptions).then((stream) => {
-  webcam.srcObject = stream;
-  webcam.play();
-});
+  }};
 
-webcam.addEventListener('loadeddata', () => {
-  gl.bindTexture(gl.TEXTURE_2D, video);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+navigator.mediaDevices.getUserMedia(streamOptions)
+  .then((stream) => {
+    console.log(stream);
+    webcam.srcObject = stream;
 
-  animate();
-});
+    initTiger(video, gl);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
-initTiger(video, gl);
+  webcam.addEventListener('loadeddata', () => {
+    gl.bindTexture(gl.TEXTURE_2D, video);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  
+    animate();
+  });
 
 function animate() {
   requestAnimationFrame(animate);
 
   gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
+  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
   controllersTick();
 
   const face = trackFace();
