@@ -19,47 +19,46 @@ function onClick() {
   }
 }
 
+const isPortrait = window.matchMedia('(orientation:portrait)').matches;
 const isSafari = !!navigator.userAgent && /safari/i.test(navigator.userAgent);
 const streamOptions = isSafari ?
   { video: true } :
-  { video: {
-    facingMode: {ideal: 'user'},
-    width: {
-      max: 1280,
-      ideal: config.actualWidth,
+  { 
+    video: {
+      facingMode: {ideal: 'user'},
+      [isPortrait ? 'height': 'width']: {
+        max: 1280,
+        ideal: config.actualWidth,
+      },
+      [isPortrait ? 'width': 'height']: {
+        max: 720,
+        ideal: config.actualHeight,
+      },
     },
-    height: {
-      max: 720,
-      ideal: config.actualHeight,
-    },
-  }};
+  };
 
 navigator.mediaDevices.getUserMedia(streamOptions)
   .then((stream) => {
-    console.log(stream);
     webcam.srcObject = stream;
-
     initTiger(video, gl);
   })
   .catch((err) => {
     console.error(err);
   });
 
-  webcam.addEventListener('loadeddata', () => {
-    gl.bindTexture(gl.TEXTURE_2D, video);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
-  
-    animate();
-  });
+webcam.addEventListener('loadeddata', () => {
+  gl.bindTexture(gl.TEXTURE_2D, video);
+  animate();
+});
+
+const videoCanvas = document.createElement('canvas');
+videoCanvas.width = config.actualWidth;
+videoCanvas.height = config.actualHeight;
+const videoContext = videoCanvas.getContext('2d');
 
 function animate() {
   requestAnimationFrame(animate);
-
-  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, webcam);
-  gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+  videoContext.drawImage(webcam, 0, 0);
   controllersTick();
 
   const face = trackFace();

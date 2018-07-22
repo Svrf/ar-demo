@@ -2,7 +2,7 @@ const config = require('./config');
 const three = require('three');
 window.THREE = three; // for three.js inspector
 
-let camera, faceObject, mouthOpeningMaterials, renderer, tigerMouthMesh;
+let camera, faceObject, mouthOpeningMaterials, renderer, tigerMouthMesh, videoTexture;
 const scene = new three.Scene();
 window.scene = scene; // for three.js inspector
 exports.scene = scene;
@@ -10,7 +10,6 @@ exports.scene = scene;
 exports.initTiger = function(video, context) {
   renderer = new three.WebGLRenderer({
     canvas: document.getElementById('mainCanvas'),
-    context,
   });
 
   faceObject = new three.Object3D();
@@ -26,6 +25,17 @@ exports.initTiger = function(video, context) {
     new three.MeshBasicMaterial({color: 0x000000})
   );
   const tigerMaskLoader = new three.BufferGeometryLoader();
+
+  // const objLoader = new three.OBJLoader();
+  // objLoader.load('basic_head.obj', (obj) => {
+  //   obj.traverse( function ( child ) {
+  //       if ( child instanceof three.Mesh ) {
+  //           child.material.map = new three.TextureLoader().load('2Dfacefortest.png');
+  //       }
+  //   });
+  //   scene.add(obj);
+  // });
+
   tigerMaskLoader.load('TigerHead.json', function(tigerMaskGeometry) {
     const tigerFaceSkinMaterial = build_customMaskMaterial('headTexture2.png');
     const tigerEyesMaterial = build_customMaskMaterial('white.png');
@@ -58,7 +68,9 @@ exports.initTiger = function(video, context) {
   scene.add(ambientLight, directLight);
 
   //init video texture with red
-  const videoTexture = new three.DataTexture(new Uint8Array([255,0,0]), 1, 1, three.RGBFormat);
+  videoTexture = new three.Texture(video);
+  videoTexture.magFilter = three.LinearFilter;
+  videoTexture.minFilter = three.LinearFilter;
   videoTexture.needsUpdate = true;
 
   //CREATE THE VIDEO BACKGROUND
@@ -86,13 +98,13 @@ exports.initTiger = function(video, context) {
   videoGeometry.addAttribute('position', new three.BufferAttribute( videoScreenCorners, 2 ) );
   videoGeometry.setIndex(new three.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
   const videoMesh = new three.Mesh(videoGeometry, videoMaterial);
-  videoMesh.onAfterRender = function() {
-      //replace videoTexture.__webglTexture by the real video texture
-      renderer.properties.update(videoTexture, '__webglTexture', video);
-      videoTexture.magFilter = three.LinearFilter;
-      videoTexture.minFilter = three.LinearFilter;
-      delete(videoMesh.onAfterRender);
-  };
+  // videoMesh.onAfterRender = function() {
+  //     //replace videoTexture.__webglTexture by the real video texture
+  //     renderer.properties.update(videoTexture, '__webglTexture', video);
+  //     videoTexture.magFilter = three.LinearFilter;
+  //     videoTexture.minFilter = three.LinearFilter;
+  //     delete(videoMesh.onAfterRender);
+  // };
   videoMesh.renderOrder = -1000; //render first
   videoMesh.frustumCulled = false;
   scene.add(videoMesh);
@@ -156,6 +168,7 @@ exports.initTiger = function(video, context) {
 exports.renderTiger = function({position, rotation, mouth}) {
   faceObject.visible = true;
   tigerMouthMesh.visible = true;
+  videoTexture.needsUpdate = true;
 
   faceObject.position.set(position.x, position.y, position.z);
   faceObject.rotation.set(rotation.x, -rotation.y, -rotation.z, 'XYZ');
@@ -171,6 +184,7 @@ exports.renderTiger = function({position, rotation, mouth}) {
 exports.renderBackgroundOnly = function() {
   faceObject.visible = false;
   tigerMouthMesh.visible = false;
+  videoTexture.needsUpdate = true;
 
   renderer.render(scene, camera);
 }
