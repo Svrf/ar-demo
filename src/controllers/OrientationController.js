@@ -31,7 +31,7 @@ module.exports = class OrientationController extends BaseController {
     const newOrientation = this.getOrientation();
     // Background is mirrored in Y axis because we're inside the sphere, so we need to mirror
     // quaternion in this way as well..
-    const mirrored = new Quaternion(newOrientation.x, -newOrientation.y, newOrientation.z, newOrientation.w)
+    const mirrored = new Quaternion(-newOrientation.x, newOrientation.y, newOrientation.z, newOrientation.w)
     newOrientation.copy(mirrored);
     this.mesh.quaternion.copy(newOrientation);
     this.previousOrientation = this.getOrientation();
