@@ -42,16 +42,7 @@ h1 {
   cursor: pointer;
   outline: none;
   padding: 0.3em;
-}
-
-#exploreButton {
   width: 100%;
-}
-
-#startButton {
-  width: 40%;
-  display: block;
-  margin: 0 auto 20px;
 }
 
 #explorePreview {

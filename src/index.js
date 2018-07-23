@@ -33,6 +33,7 @@ function onStartClick() {
   webcam.play();
   startButton.style.display = 'none';
   startButton.removeEventListener('click', onStartClick);
+  document.getElementById('exploreButton').style.display = null;
   animate();
 }
 
