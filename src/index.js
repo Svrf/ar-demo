@@ -8,26 +8,43 @@ const webcam = document.getElementById('webcam');
 const gl = document.getElementById('mainCanvas').getContext('webgl');
 const video = gl.createTexture();
 
-const isPortrait = window.matchMedia('(orientation:portrait)').matches;
+const play = document.getElementById('playButton');
+play.addEventListener('click', onClick);
 
-const streamOptions = {
-  video: {
-    facingMode: {ideal: 'user'},
-    [isPortrait ? 'height': 'width']: {
-      max: 1280,
-      ideal: config.actualWidth,
-    },
-    [isPortrait ? 'width': 'height']: {
-      max: 720,
-      ideal: config.actualHeight,
-    },
+function onClick() {
+  if (webcam) {
+    webcam.play();
+    play.style.display = "none";
+    play.removeEventListener('click', onClick);
   }
-};
+}
 
-navigator.mediaDevices.getUserMedia(streamOptions).then((stream) => {
-  webcam.srcObject = stream;
-  webcam.play();
-});
+const isPortrait = window.matchMedia('(orientation:portrait)').matches;
+const isSafari = !!navigator.userAgent && /safari/i.test(navigator.userAgent);
+const streamOptions = isSafari ?
+  { video: true } :
+  { 
+    video: {
+      facingMode: {ideal: 'user'},
+      [isPortrait ? 'height': 'width']: {
+        max: 1280,
+        ideal: config.actualWidth,
+      },
+      [isPortrait ? 'width': 'height']: {
+        max: 720,
+        ideal: config.actualHeight,
+      },
+    },
+  };
+
+navigator.mediaDevices.getUserMedia(streamOptions)
+  .then((stream) => {
+    webcam.srcObject = stream;
+    initTiger(video, gl);
+  })
+  .catch((err) => {
+    console.error(err);
+  });
 
 webcam.addEventListener('loadeddata', () => {
   gl.bindTexture(gl.TEXTURE_2D, video);
@@ -39,11 +56,8 @@ videoCanvas.width = config.actualWidth;
 videoCanvas.height = config.actualHeight;
 const videoContext = videoCanvas.getContext('2d');
 
-initTiger(videoCanvas);
-
 function animate() {
   requestAnimationFrame(animate);
-
   videoContext.drawImage(webcam, 0, 0);
   controllersTick();
 
