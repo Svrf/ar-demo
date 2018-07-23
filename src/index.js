@@ -21,8 +21,9 @@ webcamPromise.then((wc) => {
   webcamInfo = wc;
   webcamCanvas.height = webcamInfo.height;
   webcamCanvas.width = webcamInfo.width;
-  
+  initTiger(webcamCanvas);
 });
+
 startButton.addEventListener('click', onStartClick);
 function onStartClick() {
   if (!webcam) {
@@ -32,7 +33,6 @@ function onStartClick() {
   webcam.play();
   startButton.style.display = 'none';
   startButton.removeEventListener('click', onStartClick);
-  initTiger(webcamCanvas);
   animate();
 }
 

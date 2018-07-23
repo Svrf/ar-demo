@@ -20,6 +20,9 @@ function createImage(media) {
     return null;
   }
 
+  // Need a container to make its height half of width with pure CSS.
+  const container = document.createElement('div');
+  container.classList.add('image-container');
   const image = document.createElement('div');
   image.style.backgroundImage = `url('${src}')`;
   image.classList.add('image');
@@ -30,7 +33,8 @@ function createImage(media) {
     closeSearch();
   });
 
-  return image;
+  container.appendChild(image);
+  return container;
 }
 
 api.authenticate()
