@@ -13,7 +13,8 @@ h1 {
   font-weight: lighter;
 }
 
-#webcam {
+#webcam,
+#webcamCanvas {
   display: none;
 }
 
@@ -31,16 +32,26 @@ h1 {
   text-align: center;
 }
 
-#exploreButton {
-  font-size: 4em;
+#exploreButton,
+#startButton {
+  font-size: 2em;
   background: rgba(0, 0, 0, 0.5);
   border: 1px solid white;
   color: white;
   border-radius: 8px;
   cursor: pointer;
   outline: none;
-  width: 100%;
   padding: 0.3em;
+}
+
+#exploreButton {
+  width: 100%;
+}
+
+#startButton {
+  width: 40%;
+  display: block;
+  margin: 0 auto 20px;
 }
 
 #explorePreview {
@@ -54,23 +65,9 @@ h1 {
 #explore .image {
   cursor: pointer;
   display: inline-block;
-  height: 120px;
+  height: 8vh;
   width: 30%;
   background-size: contain;
-}
-
-#playButton {
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid white;
-  border-radius: 8px;
-  color: white;
-  cursor: pointer;
-  display: block;
-  font-size: 4em;
-  margin: 0 auto 20px;
-  padding: 0.3em;
-  width: 40%;
-  z-index: 100;
 }
 
 #searchContainer {

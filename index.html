@@ -3,6 +3,7 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta http-equiv="content-language" content="en-EN" />
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         
         <title>SVRF AR Demo</title>
         <link rel="stylesheet" type="text/css" href="style.css">
@@ -13,7 +14,7 @@
     <body>
         <canvas id="mainCanvas"></canvas>
         <div id="explore">
-            <button id="playButton">Play</button>
+            <button id="startButton">Start</button>
             <span id="explorePreview"></span>
             <button id="exploreButton">Explore Worlds</button>
         </div>
@@ -38,6 +39,7 @@
         </div>
 
         <video id="webcam" playsinline="true"></video>
+        <canvas id="webcamCanvas"></canvas>
 
         <script src="./dist/BRFv4_JS_TK110718_v4.1.0_trial.js"></script>
         <script src="./dist/bundle.js"></script>

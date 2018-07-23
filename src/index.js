@@ -1,64 +1,44 @@
 const trackFace = require('./tracking');
-const config = require('./config');
+const webcamPromise = require('./webcam');
 const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
 const {tick: controllersTick} = require('./viewer');
 require('./search');
 
+
+const mainCanvas = document.getElementById('mainCanvas');
+mainCanvas.height = document.documentElement.clientHeight;
+mainCanvas.width = document.documentElement.clientWidth;
+
 const webcam = document.getElementById('webcam');
-const gl = document.getElementById('mainCanvas').getContext('webgl');
-const video = gl.createTexture();
 
-const play = document.getElementById('playButton');
-play.addEventListener('click', onClick);
+const webcamCanvas = document.getElementById('webcamCanvas');
+const webcamContext = webcamCanvas.getContext('2d');
 
-function onClick() {
-  if (webcam) {
-    webcam.play();
-    play.style.display = "none";
-    play.removeEventListener('click', onClick);
-  }
-}
+const startButton = document.getElementById('startButton');
 
-const isPortrait = window.matchMedia('(orientation:portrait)').matches;
-const isSafari = !!navigator.userAgent && /safari/i.test(navigator.userAgent);
-const streamOptions = isSafari ?
-  { video: true } :
-  { 
-    video: {
-      facingMode: {ideal: 'user'},
-      [isPortrait ? 'height': 'width']: {
-        max: 1280,
-        ideal: config.actualWidth,
-      },
-      [isPortrait ? 'width': 'height']: {
-        max: 720,
-        ideal: config.actualHeight,
-      },
-    },
-  };
-
-navigator.mediaDevices.getUserMedia(streamOptions)
-  .then((stream) => {
-    webcam.srcObject = stream;
-    initTiger(video, gl);
-  })
-  .catch((err) => {
-    console.error(err);
-  });
-
-webcam.addEventListener('loadeddata', () => {
-  gl.bindTexture(gl.TEXTURE_2D, video);
-  animate();
+let webcamInfo;
+webcamPromise.then((wc) => {
+  webcamInfo = wc;
+  webcamCanvas.height = webcamInfo.height;
+  webcamCanvas.width = webcamInfo.width;
+  
 });
+startButton.addEventListener('click', onStartClick);
+function onStartClick() {
+  if (!webcam) {
+    return;
+  }
 
-const videoCanvas = document.createElement('canvas');
-videoCanvas.width = config.actualWidth;
-videoCanvas.height = config.actualHeight;
-const videoContext = videoCanvas.getContext('2d');
+  webcam.play();
+  startButton.style.display = 'none';
+  startButton.removeEventListener('click', onStartClick);
+  initTiger(webcamCanvas);
+  animate();
+}
 
 function animate() {
   requestAnimationFrame(animate);
-  videoContext.drawImage(webcam, 0, 0);
+  webcamContext.drawImage(webcam, 0, 0);
   controllersTick();
 
   const face = trackFace();
@@ -67,18 +47,19 @@ function animate() {
     return;
   }
 
-  const tanFOV = Math.tan(config.aspectRatio * config.fov * Math.PI/360); //tan(FOV/2), in radians
-  const W = face.scale / config.actualWidth;  //relative width of the detection window (1-> whole width of the detection window)
+  const fov = 40;
+  const tanFOV = Math.tan(webcamInfo.aspectRatio * fov * Math.PI/360); //tan(FOV/2), in radians
+  const W = face.scale / webcamInfo.width;  //relative width of the detection window (1-> whole width of the detection window)
   const D = 1 / (2*W*tanFOV); //distance between the front face of the cube and the camera
 
   //coords in 2D of the center of the detection window in the viewport :
-  const xv = (face.position.x / config.actualWidth)*2 - 1;
-  const yv = (-face.position.y / config.actualHeight)*2 + 1;
+  const xv = (face.position.x / webcamInfo.width)*2 - 1;
+  const yv = (-face.position.y / webcamInfo.height)*2 + 1;
 
   //coords in 3D of the center of the cube (in the view coordinates system)
   const position = {
     x: xv*D*tanFOV + 0.9,
-    y: yv*D*tanFOV/config.aspectRatio - 0.4,
+    y: yv*D*tanFOV/webcamInfo.aspectRatio - 0.4,
     z: -D-0.5,  // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
   };
 

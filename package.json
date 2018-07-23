@@ -5,7 +5,7 @@
   "main": "svrf-client.js",
   "scripts": {
     "build": "webpack",
-    "start": "webpack --watch & http-server"
+    "start": "webpack --watch & http-server -c 1"
   },
   "repository": {
     "type": "git",

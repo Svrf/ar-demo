@@ -1,4 +1,3 @@
-const config = require('./config');
 const three = require('three');
 window.THREE = three; // for three.js inspector
 
@@ -7,7 +6,7 @@ const scene = new three.Scene();
 window.scene = scene; // for three.js inspector
 exports.scene = scene;
 
-exports.initTiger = function(video, context) {
+exports.initTiger = function(video) {
   renderer = new three.WebGLRenderer({
     canvas: document.getElementById('mainCanvas'),
   });
@@ -109,7 +108,8 @@ exports.initTiger = function(video, context) {
   videoMesh.frustumCulled = false;
   scene.add(videoMesh);
 
-  camera = new three.PerspectiveCamera(config.fov, config.aspectRatio, 0.1, 100);
+  const aspectRatio = video.width / video.height;
+  camera = new three.PerspectiveCamera(40, aspectRatio, 0.1, 100);
   mouthOpeningMaterials = [];
 
   function build_customMaskMaterial(textureURL) {
