@@ -59,9 +59,9 @@ function animate() {
 
   //coords in 3D of the center of the cube (in the view coordinates system)
   const position = {
-    x: xv*D*tanFOV + 0.9,
-    y: yv*D*tanFOV/webcamInfo.aspectRatio - 0.4,
-    z: -D-0.5,  // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
+    x: xv*D*tanFOV + 0.65,
+    y: yv*D*tanFOV/webcamInfo.aspectRatio - 0.2,
+    z: -D,  // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
   };
 
   renderTiger({position, rotation: face.rotation, mouth: face.mouth});

@@ -25,16 +25,6 @@ exports.initTiger = function(video) {
   );
   const tigerMaskLoader = new three.BufferGeometryLoader();
 
-  // const objLoader = new three.OBJLoader();
-  // objLoader.load('basic_head.obj', (obj) => {
-  //   obj.traverse( function ( child ) {
-  //       if ( child instanceof three.Mesh ) {
-  //           child.material.map = new three.TextureLoader().load('2Dfacefortest.png');
-  //       }
-  //   });
-  //   scene.add(obj);
-  // });
-
   tigerMaskLoader.load('TigerHead.json', function(tigerMaskGeometry) {
     const tigerFaceSkinMaterial = build_customMaskMaterial('headTexture2.png');
     const tigerEyesMaterial = build_customMaskMaterial('white.png');
@@ -97,13 +87,6 @@ exports.initTiger = function(video) {
   videoGeometry.addAttribute('position', new three.BufferAttribute( videoScreenCorners, 2 ) );
   videoGeometry.setIndex(new three.BufferAttribute(new Uint16Array([0,1,2, 0,2,3]), 1));
   const videoMesh = new three.Mesh(videoGeometry, videoMaterial);
-  // videoMesh.onAfterRender = function() {
-  //     //replace videoTexture.__webglTexture by the real video texture
-  //     renderer.properties.update(videoTexture, '__webglTexture', video);
-  //     videoTexture.magFilter = three.LinearFilter;
-  //     videoTexture.minFilter = three.LinearFilter;
-  //     delete(videoMesh.onAfterRender);
-  // };
   videoMesh.renderOrder = -1000; //render first
   videoMesh.frustumCulled = false;
   scene.add(videoMesh);
