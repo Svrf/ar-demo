@@ -128,6 +128,8 @@ h1 {
   font-size: 3em;
   margin-right: 5px;
   font-family: Arial,sans-serif;
+  position: relative;
+  top: 5px;
 }
 
 #searchBar svg {
@@ -142,7 +144,7 @@ h1 {
   outline: none;
   color: white;
   caret-color: white;
-  font-size: 3em;
+  font-size: 2.5em;
   width: 100%;
 }
 
