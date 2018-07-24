@@ -79,11 +79,20 @@ h1 {
 }
 
 #searchHeader {
-  height: 15%;
-  color: #ccc;
+  height: 11%;
+  color: white;
   font-weight: lighter;
   text-transform: uppercase;
   text-align: center;
+}
+
+#searchHeader h1 {
+  font-size: 1.5em;
+  margin-bottom: 0;
+}
+
+#searchHeader span {
+  font-size: 1em;
 }
 
 #searchHeader img {
@@ -93,11 +102,15 @@ h1 {
 #searchBarContainer {
   position: relative;
   width: 100%;
-  height: 10%;
+  height: 14%;
 }
 
 #searchBar {
-  border-bottom: 2px solid rgba(100, 100, 100, 0.3);
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+
+  border-bottom: 2px solid white;
 
   position: absolute;
   left: 5%;
@@ -108,19 +121,18 @@ h1 {
   padding: 0 20px;
 }
 
-#backButton {
-  border: solid white;
-  border-width: 0 3px 3px 0;
+#searchBar #closeButton {
+  color: white;
   display: inline-block;
-  padding: 0.4em;
-  transform: rotate(135deg);
   cursor: pointer;
-  font-size: 2em;
+  font-size: 3em;
 }
 
 #searchBar svg {
   fill: white;
   width: 40px;
+  min-width: 40px;
+  margin-right: 5px;
 }
 
 #searchBar input {
@@ -129,8 +141,8 @@ h1 {
   outline: none;
   color: white;
   caret-color: white;
-  font-size: 4em;
-  width: 80%;
+  font-size: 3em;
+  width: 100%;
 }
 
 #searchResults {
@@ -152,7 +164,17 @@ h1 {
   width: 40%;
   padding-bottom: 20%;
 
-  margin: 20px 5%;
+  margin-bottom: 5%;
+}
+
+#searchResults .image-container:nth-child(odd) {
+  margin-left: 6.66%;
+  margin-right: 3.33%;
+}
+
+#searchResults .image-container:nth-child(even) {
+  margin-left: 3.33%;
+  margin-right: 6.66%;
 }
 
 #searchResults .image {

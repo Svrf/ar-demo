@@ -98,4 +98,4 @@ function closeSearch() {
   input.removeEventListener('keyup', handleKeyUp);
 }
 
-document.getElementById('backButton').addEventListener('click', closeSearch);
+document.getElementById('closeButton').addEventListener('click', closeSearch);
