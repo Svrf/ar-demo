@@ -107,7 +107,7 @@ h1 {
 
 #searchBar {
   display: flex;
-  align-items: baseline;
+  align-items: flex-end;
   justify-content: space-between;
 
   border-bottom: 2px solid white;
@@ -126,13 +126,14 @@ h1 {
   display: inline-block;
   cursor: pointer;
   font-size: 3em;
+  margin-right: 5px;
+  font-family: Arial,sans-serif;
 }
 
 #searchBar svg {
   fill: white;
-  width: 40px;
-  min-width: 40px;
-  margin-right: 5px;
+  flex: 0 0 25px;
+  margin-bottom: 10px;
 }
 
 #searchBar input {
