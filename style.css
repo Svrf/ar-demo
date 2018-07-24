@@ -87,7 +87,7 @@ h1 {
 }
 
 #searchHeader h1 {
-  font-size: 1.5em;
+  font-size: 1.25em;
   margin-bottom: 0;
 }
 
@@ -118,24 +118,22 @@ h1 {
 
   box-sizing: border-box;
   width: 90%;
-  padding: 0 20px;
-}
-
-#searchBar #closeButton {
-  color: white;
-  display: inline-block;
-  cursor: pointer;
-  font-size: 2.5em;
-  margin-right: 5px;
-  font-family: Arial,sans-serif;
-  position: relative;
-  top: 5px;
+  padding: 0 5px;
 }
 
 #searchBar svg {
   fill: white;
-  flex: 0 0 20px;
-  margin-bottom: 10px;
+  width: 2em;
+  height: 2em;
+  margin-bottom: 0.1em;
+}
+
+#searchBar #searchIcon {
+  margin-right: 10px;
+}
+
+#searchBar #closeButton {
+  cursor: pointer;
 }
 
 #searchBar input {
