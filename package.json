@@ -19,7 +19,8 @@
   "homepage": "https://github.com/Svrf/ar-demo#readme",
   "dependencies": {
     "debounce": "^1.1.0",
-    "svrf-client": "^1.0.0",
+    "hls.js": "^0.11.0",
+    "svrf-client": "^1.2.0",
     "three": "0.90.0",
     "tween.js": "16.3.5"
   },

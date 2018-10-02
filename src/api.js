@@ -4,7 +4,7 @@ const authApi = new SVRF.AuthenticateApi();
 const mediaApi = new SVRF.MediaApi();
 
 exports.authenticate = () => {
-  return authApi.authenticate(new SVRF.Body('a key'))
+  return authApi.authenticate(new SVRF.Body('key'))
     .then(({token}) => mediaApi.apiClient.authentications.XAppToken.apiKey = token);
 };
 
@@ -22,12 +22,17 @@ exports.getTrending = () => {
 };
 
 exports.loadMoreTrending = () => {
-  return mediaApi.getTrending({size: 99, nextPageCursor: trending.cursor})
+  const searchOptions = {
+    size: 99,
+    type: ['video'],
+    nextPageCursor: trending.cursor,
+  };
+
+  return mediaApi.getTrending(searchOptions)
     .then(({media, nextPageCursor}) => {
       trending.cursor = nextPageCursor;
-      const photos = media.filter((m) => m.type === 'photo');
-      trending.cache.push.apply(trending.cache, photos);
-      return photos;
+      trending.cache.push.apply(trending.cache, media);
+      return media;
     });
 }
 
@@ -58,10 +63,11 @@ exports.loadMoreSearch = () => {
   }
 
   const searchOptions = {
-    type: 'photo',
+    type: ['photo'],
     size: 20,
     pageNum: searchInfo.nextPage,
   };
+
   return mediaApi.search(lastTerm, searchOptions)
     .then(({media, totalNum, nextPageNum}) => {
       searchInfo.nextPage = nextPageNum;

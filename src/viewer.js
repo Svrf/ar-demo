@@ -5,7 +5,9 @@ const {
   MeshBasicMaterial,
   SphereBufferGeometry,
   Texture,
+  VideoTexture,
 } = require('three');
+const HLS = require('hls.js/dist/hls.light');
 
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
@@ -24,27 +26,49 @@ exports.removeBackground = () => {
   background.material.dispose();
 };
 
-exports.addPhotoBackground = (media) => {
-  const url = media.files.images['4096'] || media.files.images.max;
+exports.addPhotoBackground = (url) => {
   const img = document.createElement('img');
   img.crossOrigin = 'anonymous';
   img.src = url;
   img.onload = () => {
-    const sphere = new SphereBufferGeometry(100, 64, 64);
     const texture = new Texture(img);
-    const material = new MeshBasicMaterial({ map: texture, side: BackSide });
-    const mesh = new Mesh(sphere, material);
-    texture.minFilter = LinearFilter;
-    texture.needsUpdate = true;
-    window.scene.add(mesh);
+    applyTexture(texture);
+  };
+};
+// TODO: dispose hls; alternative way of loading
+exports.addVideoBackground = (url) => {
+  const video = document.createElement('video');
+  video.crossOrigin = 'anonymous';
+  video.muted = true;
+  video.autoplay = true;
+  video.loop = true;
+  video.setAttribute('playsinline', '');
 
-    controllers = [
-      new MouseController(mesh, canvas),
-      new OrientationController(mesh),
-    ];
+  const { MEDIA_ATTACHED } = HLS.Events;
+  const hls = new HLS();
+  hls.attachMedia(video);
+  hls.on(MEDIA_ATTACHED, () => hls.loadSource(url));
+  video.oncanplay = () => {
+    const texture = new VideoTexture(video);
+    applyTexture(texture);
+    video.play();
   };
 };
 
 exports.tick = function () {
   controllers.forEach((c) => c.tick());
 };
+
+function applyTexture(texture) {
+  const sphere = new SphereBufferGeometry(100, 64, 64);
+  const material = new MeshBasicMaterial({ map: texture, side: BackSide });
+  const mesh = new Mesh(sphere, material);
+  texture.minFilter = LinearFilter;
+  texture.needsUpdate = true;
+  window.scene.add(mesh);
+
+  controllers = [
+    new MouseController(mesh, canvas),
+    new OrientationController(mesh),
+  ];
+}

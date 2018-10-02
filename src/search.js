@@ -1,6 +1,10 @@
 const debounce = require('debounce');
 
-const {removeBackground, addPhotoBackground} = require('./viewer');
+const {
+  addPhotoBackground,
+  addVideoBackground,
+  removeBackground,
+} = require('./viewer');
 const api = require('./api');
 
 const searchContainer = document.getElementById('searchContainer');
@@ -29,7 +33,14 @@ function createImage(media) {
 
   image.addEventListener('click', () => {
     removeBackground();
-    addPhotoBackground(media);
+
+    if (media.type === 'photo') {
+      const url = media.files.images['4096'] || media.files.images.max;
+      addPhotoBackground(url);
+    } else if (media.type === 'video') {
+      const url = media.files.resolutions.hls;
+      addVideoBackground(url);
+    }
     closeSearch();
   });
 

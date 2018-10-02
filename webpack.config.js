@@ -1,5 +1,4 @@
 const path = require('path');
-const webpack = require('webpack');
 
 module.exports = {
   entry: './src/index.js',
@@ -24,12 +23,4 @@ module.exports = {
       }
     ],
   },
-  plugins: [
-    // For the demo_tiger.js script
-    new webpack.ProvidePlugin({
-      THREE: 'three',
-      TWEEN: 'tween.js',
-    }),
-    //new webpack.IgnorePlugin(/fs/),
-  ],
 };
