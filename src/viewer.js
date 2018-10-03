@@ -51,12 +51,16 @@ exports.addVideoBackground = (url) => {
   hls = new HLS();
   hls.attachMedia(video);
   hls.on(MEDIA_ATTACHED, () => hls.loadSource(url));
-  video.oncanplay = () => {
+
+  const addTexture = () => {
     video.oncanplay = null;
+    video.onloadedmetadata = null;
     const texture = new VideoTexture(video);
     applyTexture(texture);
     video.play();
   };
+  video.oncanplay = addTexture;
+  video.onloadedmetadata = addTexture;
 };
 
 exports.tick = function () {
