@@ -38,8 +38,9 @@ function createImage(media) {
       const url = media.files.images['4096'] || media.files.images.max;
       addPhotoBackground(url);
     } else if (media.type === 'video') {
-      const url = media.files.resolutions.hls;
-      addVideoBackground(url);
+      //const url = media.files.resolutions.hls;
+      addVideoBackground('https://www.svrf.com/hls/svrf-previews/34861/resolutions/,medium,high,low,original,.mp4.urlset/master.m3u8');
+      //addVideoBackground('https://www.svrf.com/hls/svrf-previews/238/resolutions/,medium,low,original,.mp4.urlset/master.m3u8');
     }
     closeSearch();
   });

@@ -14,6 +14,7 @@ const OrientationController = require('./controllers/OrientationController');
 
 const canvas = document.getElementById('mainCanvas');
 let controllers = [];
+let hls;
 
 // todo: remove window.scene reference
 
@@ -24,6 +25,8 @@ exports.removeBackground = () => {
   window.scene.remove(background);
   background.geometry.dispose();
   background.material.dispose();
+  hls && hls.destroy();
+  hls = null;
 };
 
 exports.addPhotoBackground = (url) => {
@@ -45,10 +48,11 @@ exports.addVideoBackground = (url) => {
   video.setAttribute('playsinline', '');
 
   const { MEDIA_ATTACHED } = HLS.Events;
-  const hls = new HLS();
+  hls = new HLS();
   hls.attachMedia(video);
   hls.on(MEDIA_ATTACHED, () => hls.loadSource(url));
   video.oncanplay = () => {
+    video.oncanplay = null;
     const texture = new VideoTexture(video);
     applyTexture(texture);
     video.play();
