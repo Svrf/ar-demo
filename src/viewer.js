@@ -14,7 +14,7 @@ const OrientationController = require('./controllers/OrientationController');
 
 const canvas = document.getElementById('mainCanvas');
 let controllers = [];
-let hls;
+let hlsInstance;
 
 // todo: remove window.scene reference
 
@@ -25,8 +25,8 @@ exports.removeBackground = () => {
   window.scene.remove(background);
   background.geometry.dispose();
   background.material.dispose();
-  hls && hls.destroy();
-  hls = null;
+  hlsInstance && hlsInstance.destroy();
+  hlsInstance = null;
 };
 
 exports.addPhotoBackground = (url) => {
@@ -39,25 +39,35 @@ exports.addPhotoBackground = (url) => {
   };
 };
 // TODO: dispose hls; alternative way of loading
-exports.addVideoBackground = (url) => {
+exports.addVideoBackground = ({hls, mp4}) => {
   const video = document.createElement('video');
   video.crossOrigin = 'anonymous';
-  video.muted = true;
   video.autoplay = true;
+  video.muted = true;
   video.loop = true;
-  video.setAttribute('playsinline', '');
+  video.setAttribute('playsinline', 'true');
 
-  const { MEDIA_ATTACHED } = HLS.Events;
-  hls = new HLS();
-  hls.attachMedia(video);
-  hls.on(MEDIA_ATTACHED, () => hls.loadSource(url));
+  if (HLS.isSupported()) {
+    const { MEDIA_ATTACHED } = HLS.Events;
+    hlsInstance = new HLS();
+    hlsInstance.attachMedia(video);
+    hlsInstance.on(MEDIA_ATTACHED, () => hlsInstance.loadSource(hls));
+  } else {
+    video.src = video.canPlayType('application/vnd.apple.mpegurl') ? hls : mp4;
+  }
 
   const addTexture = () => {
+    alert('event triggered');
     video.oncanplay = null;
     video.onloadedmetadata = null;
-    const texture = new VideoTexture(video);
-    applyTexture(texture);
-    video.play();
+    try {
+
+      const texture = new VideoTexture(video);
+      applyTexture(texture);
+      video.play();
+    } catch(err) {
+      alert(JSON.stringify(err));
+    }
   };
   video.oncanplay = addTexture;
   video.onloadedmetadata = addTexture;
