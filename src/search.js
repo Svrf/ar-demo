@@ -38,7 +38,7 @@ function createImage(media) {
       const url = media.files.images['4096'] || media.files.images.max;
       addPhotoBackground(url);
     } else if (media.type === 'video') {
-      const {hls, max: mp4} = media.files.videos;
+      const {hls, 848: mp4} = media.files.videos;
       addVideoBackground({hls, mp4});
     }
     closeSearch();

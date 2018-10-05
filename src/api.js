@@ -24,7 +24,7 @@ exports.getTrending = () => {
 exports.loadMoreTrending = () => {
   const searchOptions = {
     size: 99,
-    type: ['video'],
+    type: ['photo', 'video'],
     nextPageCursor: trending.cursor,
   };
 
@@ -63,7 +63,7 @@ exports.loadMoreSearch = () => {
   }
 
   const searchOptions = {
-    type: ['photo'],
+    type: ['photo', 'video'],
     size: 20,
     pageNum: searchInfo.nextPage,
   };

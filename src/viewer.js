@@ -8,6 +8,7 @@ const {
   VideoTexture,
 } = require('three');
 const HLS = require('hls.js/dist/hls.light');
+const getIOSVersion = require('ios-version');
 
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
@@ -16,15 +17,22 @@ const canvas = document.getElementById('mainCanvas');
 let controllers = [];
 let hlsInstance;
 
+const iosVersion = getIOSVersion(navigator.userAgent);
+// https://bugs.webkit.org/show_bug.cgi?id=179417
+const hasWebglHlsBug = iosVersion && iosVersion.major === 11 && iosVersion.minor < 4;
+
 // todo: remove window.scene reference
 
 exports.removeBackground = () => {
   // Removing the only Mesh (either camera or panorama background).
   const background = window.scene.children.find(c => c.type === 'Mesh');
+  if (background) {
+    window.scene.remove(background);
+    background.geometry.dispose();
+    background.material.dispose();
+  }
   controllers.forEach((c) => c.dispose());
-  window.scene.remove(background);
-  background.geometry.dispose();
-  background.material.dispose();
+  controllers = [];
   hlsInstance && hlsInstance.destroy();
   hlsInstance = null;
 };
@@ -38,7 +46,7 @@ exports.addPhotoBackground = (url) => {
     applyTexture(texture);
   };
 };
-// TODO: dispose hls; alternative way of loading
+
 exports.addVideoBackground = ({hls, mp4}) => {
   const video = document.createElement('video');
   video.crossOrigin = 'anonymous';
@@ -47,30 +55,26 @@ exports.addVideoBackground = ({hls, mp4}) => {
   video.loop = true;
   video.setAttribute('playsinline', 'true');
 
+  const addTexture = () => {
+    video.oncanplay = null;
+    video.onloadedmetadata = null;
+      const texture = new VideoTexture(video);
+      applyTexture(texture);
+      video.play();
+  };
+
+  video.oncanplay = addTexture;
+  video.onloadedmetadata = addTexture;
+
   if (HLS.isSupported()) {
     const { MEDIA_ATTACHED } = HLS.Events;
     hlsInstance = new HLS();
     hlsInstance.attachMedia(video);
     hlsInstance.on(MEDIA_ATTACHED, () => hlsInstance.loadSource(hls));
   } else {
-    video.src = video.canPlayType('application/vnd.apple.mpegurl') ? hls : mp4;
+    const canPlayHls = !hasWebglHlsBug && video.canPlayType('application/vnd.apple.mpegurl');
+    video.src = canPlayHls ? hls : mp4;
   }
-
-  const addTexture = () => {
-    alert('event triggered');
-    video.oncanplay = null;
-    video.onloadedmetadata = null;
-    try {
-
-      const texture = new VideoTexture(video);
-      applyTexture(texture);
-      video.play();
-    } catch(err) {
-      alert(JSON.stringify(err));
-    }
-  };
-  video.oncanplay = addTexture;
-  video.onloadedmetadata = addTexture;
 };
 
 exports.tick = function () {
