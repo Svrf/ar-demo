@@ -16,6 +16,7 @@ const OrientationController = require('./controllers/OrientationController');
 const canvas = document.getElementById('mainCanvas');
 let controllers = [];
 let hlsInstance;
+let video;
 
 const iosVersion = getIOSVersion(navigator.userAgent);
 // https://bugs.webkit.org/show_bug.cgi?id=179417
@@ -35,6 +36,7 @@ exports.removeBackground = () => {
   controllers = [];
   hlsInstance && hlsInstance.destroy();
   hlsInstance = null;
+  video && video.pause();
 };
 
 exports.addPhotoBackground = (url) => {
@@ -48,19 +50,19 @@ exports.addPhotoBackground = (url) => {
 };
 
 exports.addVideoBackground = ({hls, mp4}) => {
-  const video = document.createElement('video');
+  video = document.createElement('video');
   video.crossOrigin = 'anonymous';
-  video.autoplay = true;
   video.muted = true;
   video.loop = true;
-  video.setAttribute('playsinline', 'true');
+  video.setAttribute('playsinline', '');
+  video.autoplay = true;
 
   const addTexture = () => {
     video.oncanplay = null;
     video.onloadedmetadata = null;
-      const texture = new VideoTexture(video);
-      applyTexture(texture);
-      video.play();
+    const texture = new VideoTexture(video);
+    applyTexture(texture);
+    video.play();
   };
 
   video.oncanplay = addTexture;
