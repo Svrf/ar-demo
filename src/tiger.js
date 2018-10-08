@@ -92,7 +92,7 @@ exports.initTiger = function(video) {
   scene.add(videoMesh);
 
   const aspectRatio = video.width / video.height;
-  camera = new three.PerspectiveCamera(40, aspectRatio, 0.1, 100);
+  camera = new three.PerspectiveCamera(60, aspectRatio, 0.1, 100);
   mouthOpeningMaterials = [];
 
   function build_customMaskMaterial(textureURL) {
