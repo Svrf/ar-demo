@@ -1,5 +1,5 @@
 const trackFace = require('./tracking');
-const getWebcamStream = require('./webcam');
+const webcamPromise = require('./webcam');
 const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
 const {tick: controllersTick} = require('./viewer');
 const {canAccessCamera} = require('./browsers');
@@ -20,7 +20,7 @@ const startButton = document.getElementById('startButton');
 let webcamInfo;
 
 if (canAccessCamera) {
-  getWebcamStream().then((wc) => {
+  webcamPromise.then((wc) => {
     webcamInfo = wc;
     webcamCanvas.height = webcamInfo.height;
     webcamCanvas.width = webcamInfo.width;

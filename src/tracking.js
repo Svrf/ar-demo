@@ -1,4 +1,5 @@
 const webcamPromise = require('./webcam');
+const {canAccessCamera} = require('./browsers');
 
 const brf = {locateFile: (filename) => `dist/${filename}`};
 initializeBRF(brf);
@@ -18,7 +19,9 @@ function checkSdk() {
   });
 }
 
-checkSdk();
+if (canAccessCamera) {
+  checkSdk();
+}
 
 const webcamContext = document.getElementById('webcamCanvas').getContext('2d');
 

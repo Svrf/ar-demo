@@ -1,3 +1,5 @@
+const {canAccessCamera} = require('./browsers');
+
 const fullHeight = document.documentElement.clientHeight;
 const fullWidth = document.documentElement.clientWidth;
 
@@ -31,15 +33,17 @@ const streamOptions = iOS ?
     },
   };
 
-module.exports = () => navigator.mediaDevices.getUserMedia(streamOptions)
-  .then((stream) => {
-    webcam.srcObject = stream;
-
-    return new Promise((resolve) => {
-      webcam.addEventListener('loadedmetadata', () => resolve({
-        aspectRatio: webcam.videoWidth / webcam.videoHeight,
-        height: webcam.videoHeight,
-        width: webcam.videoWidth,
-      }));
+if (canAccessCamera) {
+  module.exports = navigator.mediaDevices.getUserMedia(streamOptions)
+    .then((stream) => {
+      webcam.srcObject = stream;
+  
+      return new Promise((resolve) => {
+        webcam.addEventListener('loadedmetadata', () => resolve({
+          aspectRatio: webcam.videoWidth / webcam.videoHeight,
+          height: webcam.videoHeight,
+          width: webcam.videoWidth,
+        }));
+      });
     });
-  });
+}
