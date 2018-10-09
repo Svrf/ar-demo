@@ -1,7 +1,8 @@
 const trackFace = require('./tracking');
-const webcamPromise = require('./webcam');
+const getWebcamStream = require('./webcam');
 const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
 const {tick: controllersTick} = require('./viewer');
+const {canAccessCamera} = require('./browsers');
 require('./search');
 
 
@@ -17,14 +18,20 @@ const webcamContext = webcamCanvas.getContext('2d');
 const startButton = document.getElementById('startButton');
 
 let webcamInfo;
-webcamPromise.then((wc) => {
-  webcamInfo = wc;
-  webcamCanvas.height = webcamInfo.height;
-  webcamCanvas.width = webcamInfo.width;
-  initTiger(webcamCanvas);
-});
 
-startButton.addEventListener('click', onStartClick);
+if (canAccessCamera) {
+  getWebcamStream().then((wc) => {
+    webcamInfo = wc;
+    webcamCanvas.height = webcamInfo.height;
+    webcamCanvas.width = webcamInfo.width;
+    initTiger(webcamCanvas);
+  });
+  startButton.addEventListener('click', onStartClick);
+} else {
+  document.body.innerHTML = '<p>Your browser is not supported. Please use Safari for iOS.</p>';
+  document.body.style.textAlign = 'center';
+}
+
 function onStartClick() {
   if (!webcam) {
     return;

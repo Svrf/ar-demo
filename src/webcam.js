@@ -31,7 +31,7 @@ const streamOptions = iOS ?
     },
   };
 
-module.exports = navigator.mediaDevices.getUserMedia(streamOptions)
+module.exports = () => navigator.mediaDevices.getUserMedia(streamOptions)
   .then((stream) => {
     webcam.srcObject = stream;
 

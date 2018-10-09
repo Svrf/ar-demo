@@ -8,19 +8,15 @@ const {
   VideoTexture,
 } = require('three');
 const HLS = require('hls.js/dist/hls.light');
-const getIOSVersion = require('ios-version');
 
 const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
+const {hasWebglHlsBug} = require('./browsers');
 
 const canvas = document.getElementById('mainCanvas');
 let controllers = [];
 let hlsInstance;
 let video;
-
-const iosVersion = getIOSVersion(navigator.userAgent);
-// https://bugs.webkit.org/show_bug.cgi?id=179417
-const hasWebglHlsBug = iosVersion && iosVersion.major === 11 && iosVersion.minor < 4;
 
 // todo: remove window.scene reference
 
@@ -69,7 +65,7 @@ exports.addVideoBackground = ({hls, mp4}) => {
   video.onloadedmetadata = addTexture;
 
   if (HLS.isSupported()) {
-    const { MEDIA_ATTACHED } = HLS.Events;
+    const {MEDIA_ATTACHED} = HLS.Events;
     hlsInstance = new HLS();
     hlsInstance.attachMedia(video);
     hlsInstance.on(MEDIA_ATTACHED, () => hlsInstance.loadSource(hls));
