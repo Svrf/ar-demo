@@ -1,14 +1,18 @@
 const trackFace = require('./tracking');
 const webcamPromise = require('./webcam');
 const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
-const {tick: controllersTick} = require('./viewer');
+const {tick: viewerTick, init: initViewer, changeFov} = require('./viewer');
 const {canAccessCamera} = require('./browsers');
 require('./search');
 
 
-const mainCanvas = document.getElementById('mainCanvas');
-mainCanvas.height = document.documentElement.clientHeight;
-mainCanvas.width = document.documentElement.clientWidth;
+const tigerCanvas = document.getElementById('tigerCanvas');
+tigerCanvas.height = document.documentElement.clientHeight;
+tigerCanvas.width = document.documentElement.clientWidth;
+
+const backgroundCanvas = document.getElementById('backgroundCanvas');
+backgroundCanvas.height = document.documentElement.clientHeight;
+backgroundCanvas.width = document.documentElement.clientWidth;
 
 const webcam = document.getElementById('webcam');
 
@@ -16,6 +20,7 @@ const webcamCanvas = document.getElementById('webcamCanvas');
 const webcamContext = webcamCanvas.getContext('2d');
 
 const startButton = document.getElementById('startButton');
+const zoomSlider = document.getElementById('slider');
 
 let webcamInfo;
 
@@ -25,8 +30,10 @@ if (canAccessCamera) {
     webcamCanvas.height = webcamInfo.height;
     webcamCanvas.width = webcamInfo.width;
     initTiger(webcamCanvas);
+    initViewer(webcamCanvas);
   });
   startButton.addEventListener('click', onStartClick);
+  zoomSlider.addEventListener('change', (e) => changeFov(+e.target.value));
 } else {
   document.body.innerHTML = '<p>Your browser is not supported. Please use Safari for iOS.</p>';
   document.body.style.textAlign = 'center';
@@ -48,7 +55,7 @@ function onStartClick() {
 function animate() {
   requestAnimationFrame(animate);
   webcamContext.drawImage(webcam, 0, 0);
-  controllersTick();
+  viewerTick();
 
   const face = trackFace();
   if (!face) {

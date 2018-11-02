@@ -8,7 +8,8 @@ exports.scene = scene;
 
 exports.initTiger = function(video) {
   renderer = new three.WebGLRenderer({
-    canvas: document.getElementById('mainCanvas'),
+    alpha: true,
+    canvas: document.getElementById('tigerCanvas'),
   });
 
   faceObject = new three.Object3D();

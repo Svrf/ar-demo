@@ -3,9 +3,12 @@ const {
   LinearFilter,
   Mesh,
   MeshBasicMaterial,
+  PerspectiveCamera,
+  Scene,
   SphereBufferGeometry,
   Texture,
   VideoTexture,
+  WebGLRenderer,
 } = require('three');
 const HLS = require('hls.js/dist/hls.light');
 
@@ -13,21 +16,35 @@ const MouseController = require('./controllers/MouseController');
 const OrientationController = require('./controllers/OrientationController');
 const {hasWebglHlsBug} = require('./browsers');
 
-const canvas = document.getElementById('mainCanvas');
+const canvas = document.getElementById('backgroundCanvas');
 let controllers = [];
 let hlsInstance;
 let video;
 
 // todo: remove window.scene reference
 
+const scene = new Scene();
+let camera, renderer;
+
+exports.init = (webcam) => {
+  camera = new PerspectiveCamera(60, webcam.width/webcam.height, 0.1, 100);
+  renderer = new WebGLRenderer({canvas});
+}
+
+function removeMesh(scene) {
+  const mesh = window.scene.children.find(c => c.type === 'Mesh');
+  if (mesh) {
+    scene.remove(mesh);
+    mesh.geometry.dispose();
+    mesh.material.dispose();
+  }
+}
+
 exports.removeBackground = () => {
   // Removing the only Mesh (either camera or panorama background).
-  const background = window.scene.children.find(c => c.type === 'Mesh');
-  if (background) {
-    window.scene.remove(background);
-    background.geometry.dispose();
-    background.material.dispose();
-  }
+  removeMesh(window.scene); // Removing camera background
+  removeMesh(scene); // Removing old 360 background
+
   controllers.forEach((c) => c.dispose());
   controllers = [];
   hlsInstance && hlsInstance.destroy();
@@ -77,6 +94,7 @@ exports.addVideoBackground = ({hls, mp4}) => {
 
 exports.tick = function () {
   controllers.forEach((c) => c.tick());
+  renderer.render(scene, camera);
 };
 
 function applyTexture(texture) {
@@ -85,10 +103,15 @@ function applyTexture(texture) {
   const mesh = new Mesh(sphere, material);
   texture.minFilter = LinearFilter;
   texture.needsUpdate = true;
-  window.scene.add(mesh);
+  scene.add(mesh);
 
   controllers = [
     new MouseController(mesh, canvas),
     new OrientationController(mesh),
   ];
+}
+
+exports.changeFov = function (fov) {
+  camera.fov = fov;
+  camera.updateProjectionMatrix();
 }

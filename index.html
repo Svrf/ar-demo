@@ -12,7 +12,11 @@
     </head>
     
     <body>
-        <canvas id="mainCanvas"></canvas>
+        <div id="sliderContainer">
+            <input type="range" min="1" max="120" value="60" id="slider">
+        </div>
+        <canvas id="backgroundCanvas"></canvas>
+        <canvas id="tigerCanvas"></canvas>
         <div id="explore">
             <span id="explorePreview" style="display: none;"></span>
             <button id="startButton">Start</button>
