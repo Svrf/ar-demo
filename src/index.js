@@ -33,7 +33,7 @@ if (canAccessCamera) {
     initViewer(webcamCanvas);
   });
   startButton.addEventListener('click', onStartClick);
-  zoomSlider.addEventListener('change', (e) => changeFov(+e.target.value));
+  zoomSlider.addEventListener('input', (e) => changeFov(+e.target.value));
 } else {
   document.body.innerHTML = '<p>Your browser is not supported. Please use Safari for iOS.</p>';
   document.body.style.textAlign = 'center';
@@ -63,7 +63,7 @@ function animate() {
     return;
   }
 
-  const fov = 60;
+  const fov = 40;
   const tanFOV = Math.tan(webcamInfo.aspectRatio * fov * Math.PI/360); //tan(FOV/2), in radians
   const W = face.scale / webcamInfo.width;  //relative width of the detection window (1-> whole width of the detection window)
   const D = 1 / (2*W*tanFOV); //distance between the front face of the cube and the camera

@@ -88,8 +88,29 @@ h1 {
   top: 5%;
 }
 
-#sliderContainer #slider {
+#slider {
   width: 100%;
+  direction: rtl;
+  -webkit-appearance: none;
+  appearance: none;
+  height: 30px;
+  background: #d3d3d3;
+  outline: none;
+  opacity: 0.8;
+  transition: opacity .2s;
+}
+
+#slider:hover {
+  opacity: 1;
+}
+
+#slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 30px;
+  height: 30px;
+  background: #76d8fe;
+  cursor: pointer;
 }
 
 #searchContainer {
