@@ -1,7 +1,12 @@
 const trackFace = require('./tracking');
 const webcamPromise = require('./webcam');
 const {initTiger, renderBackgroundOnly, renderTiger} = require('./tiger');
-const {tick: viewerTick, init: initViewer, changeFov} = require('./viewer');
+const {
+  tick: viewerTick,
+  init: initViewer,
+  changeFov,
+  changeCameraZ,
+} = require('./viewer');
 const {canAccessCamera} = require('./browsers');
 require('./search');
 
@@ -20,7 +25,8 @@ const webcamCanvas = document.getElementById('webcamCanvas');
 const webcamContext = webcamCanvas.getContext('2d');
 
 const startButton = document.getElementById('startButton');
-const zoomSlider = document.getElementById('slider');
+const fovSlider = document.getElementById('fovSlider');
+const zSlider = document.getElementById('zSlider');
 
 let webcamInfo;
 
@@ -33,7 +39,8 @@ if (canAccessCamera) {
     initViewer(webcamCanvas);
   });
   startButton.addEventListener('click', onStartClick);
-  zoomSlider.addEventListener('input', (e) => changeFov(+e.target.value));
+  fovSlider.addEventListener('input', (e) => changeFov(+e.target.value));
+  zSlider.addEventListener('input', (e) => changeCameraZ(+e.target.value));
 } else {
   document.body.innerHTML = '<p>Your browser is not supported. Please use Safari for iOS.</p>';
   document.body.style.textAlign = 'center';

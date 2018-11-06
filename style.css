@@ -80,15 +80,28 @@ h1 {
   background-size: contain;
 }
 
-#sliderContainer {
+.sliderContainer {
   position: fixed;
   z-index: 1;
   width: 80%;
   right: 10%;
+}
+
+#fovSliderContainer {
   top: 5%;
 }
 
-#slider {
+#zSliderContainer {
+  top: 15%;
+}
+
+.sliderContainer h2 {
+  text-align: center;
+  color: white;
+  text-shadow: 2px 2px 4px black;
+}
+
+.sliderContainer input {
   width: 100%;
   direction: rtl;
   -webkit-appearance: none;
@@ -100,11 +113,11 @@ h1 {
   transition: opacity .2s;
 }
 
-#slider:hover {
+.sliderContainer input:hover {
   opacity: 1;
 }
 
-#slider::-webkit-slider-thumb {
+.sliderContainer input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 30px;
@@ -120,6 +133,7 @@ h1 {
   left: 0;
   right: 0;
   background-color: rgba(0, 0, 0, 0.6);
+  z-index: 2;
 }
 
 #searchHeader {

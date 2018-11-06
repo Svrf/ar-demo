@@ -32,7 +32,7 @@ exports.init = (webcam) => {
 }
 
 function removeMesh(scene) {
-  const mesh = window.scene.children.find(c => c.type === 'Mesh');
+  const mesh = scene.children.find(c => c.type === 'Mesh');
   if (mesh) {
     scene.remove(mesh);
     mesh.geometry.dispose();
@@ -114,4 +114,8 @@ function applyTexture(texture) {
 exports.changeFov = function (fov) {
   camera.fov = fov;
   camera.updateProjectionMatrix();
+}
+
+exports.changeCameraZ = function (z) {
+  camera.position.z = z;
 }
