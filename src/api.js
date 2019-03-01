@@ -9,7 +9,7 @@ exports.authenticate = () => {
 };
 
 const trending = {
-  cursor: null,
+  nextPage: 0,
   cache: [],
 };
 
@@ -25,12 +25,12 @@ exports.loadMoreTrending = () => {
   const searchOptions = {
     size: 99,
     type: ['photo', 'video'],
-    nextPageCursor: trending.cursor,
+    pageNum: trending.nextPage,
   };
 
   return mediaApi.getTrending(searchOptions)
-    .then(({media, nextPageCursor}) => {
-      trending.cursor = nextPageCursor;
+    .then(({media, nextPageNum}) => {
+      trending.nextPage = nextPageNum;
       trending.cache.push.apply(trending.cache, media);
       return media;
     });
