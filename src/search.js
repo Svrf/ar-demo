@@ -48,11 +48,10 @@ function createImage(media) {
   return container;
 }
 
-api.authenticate()
-  .then(() => {
-    document.getElementById('exploreButton').addEventListener('click', handleExploreClick);
-    return api.getTrending();
-  }).then((trending) => {
+document.getElementById('exploreButton').addEventListener('click', handleExploreClick);
+
+api.getTrending()
+  .then((trending) => {
     trending.forEach((media) => appendResultItem(media));
     trending
       .slice(0, 3)
@@ -61,7 +60,6 @@ api.authenticate()
         preview && explorePreviews.appendChild(preview);
       });
   });
-
 
 let isLoading = false;
 function scrollHandler() {

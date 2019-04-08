@@ -1,12 +1,7 @@
-const SVRF = require('svrf-client');
+const Svrf = require('svrf-client');
 
-const authApi = new SVRF.AuthenticateApi();
-const mediaApi = new SVRF.MediaApi();
-
-exports.authenticate = () => {
-  return authApi.authenticate(new SVRF.Body('key'))
-    .then(({token}) => mediaApi.apiClient.authentications.XAppToken.apiKey = token);
-};
+const api = new Svrf('key');
+const mediaApi = api.media;
 
 const trending = {
   nextPage: 0,
@@ -24,7 +19,7 @@ exports.getTrending = () => {
 exports.loadMoreTrending = () => {
   const searchOptions = {
     size: 99,
-    type: ['photo', 'video'],
+    type: [Svrf.enums.mediaType.PHOTO, Svrf.enums.mediaType.VIDEO],
     pageNum: trending.nextPage,
   };
 
@@ -63,7 +58,7 @@ exports.loadMoreSearch = () => {
   }
 
   const searchOptions = {
-    type: ['photo', 'video'],
+    type: [Svrf.enums.mediaType.PHOTO, Svrf.enums.mediaType.VIDEO],
     size: 20,
     pageNum: searchInfo.nextPage,
   };
